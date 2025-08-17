@@ -205,7 +205,7 @@ If you encounter issues:
 
 - [Base Documentation](https://docs.base.org)
 - [OnchainKit Documentation](https://onchainkit.xyz/getting-started)
-- [MiniKit Documentation](https://docs.farcaster.xyz/developers/minikit)
+- [MiniKit Documentation](https://docs.base.org/mini-apps/technical-reference/minikit/overview)
 - [Next.js Documentation](https://nextjs.org/docs)
 
 ---
