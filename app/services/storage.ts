@@ -1,16 +1,25 @@
 // Persistent storage service for demo mode
-import { Business, CommunityPost } from '../types/localbase';
+import { Business, CommunityPost, Review } from '../types/localbase';
 
 export class PersistentStorage {
   private static BUSINESSES_KEY = 'localbase_businesses';
   private static POSTS_KEY = 'localbase_posts';
+  private static REVIEWS_KEY = 'localbase_reviews';
 
   // Get stored businesses or return empty array
   static getStoredBusinesses(): Business[] {
     if (typeof window === 'undefined') return [];
     try {
       const stored = localStorage.getItem(this.BUSINESSES_KEY);
-      return stored ? JSON.parse(stored) : [];
+      const businesses = stored ? JSON.parse(stored) : [];
+      
+      // Migrate existing businesses to add missing fields
+      return businesses.map((business: Partial<Business>) => ({
+        ...business,
+        verified: business.verified ?? false,
+        averageRating: business.averageRating ?? 0,
+        totalReviews: business.totalReviews ?? 0,
+      })) as Business[];
     } catch {
       return [];
     }
@@ -61,17 +70,47 @@ export class PersistentStorage {
     this.savePosts(posts);
   }
 
+  // Get stored reviews or return empty array
+  static getStoredReviews(): Review[] {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem(this.REVIEWS_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // Save reviews to localStorage
+  static saveReviews(reviews: Review[]): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(this.REVIEWS_KEY, JSON.stringify(reviews));
+    } catch (error) {
+      console.error('Failed to save reviews:', error);
+    }
+  }
+
+  // Add a new review
+  static addReview(review: Review): void {
+    const reviews = this.getStoredReviews();
+    reviews.unshift(review); // Add to beginning
+    this.saveReviews(reviews);
+  }
+
   // Clear all stored data (for testing)
   static clearAll(): void {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(this.BUSINESSES_KEY);
     localStorage.removeItem(this.POSTS_KEY);
+    localStorage.removeItem(this.REVIEWS_KEY);
   }
 
   // Initialize with default mock data if empty
   static initializeDefaultData(): void {
     const businesses = this.getStoredBusinesses();
     const posts = this.getStoredPosts();
+    const reviews = this.getStoredReviews();
 
     if (businesses.length === 0) {
       this.saveBusinesses(this.getDefaultBusinesses());
@@ -79,6 +118,10 @@ export class PersistentStorage {
 
     if (posts.length === 0) {
       this.savePosts(this.getDefaultPosts());
+    }
+
+    if (reviews.length === 0) {
+      this.saveReviews(this.getDefaultReviews());
     }
   }
 
@@ -98,6 +141,13 @@ export class PersistentStorage {
         reputationScore: 98,
         acceptsBasePay: true,
         avatarUrl: '☕',
+        verified: true,
+        averageRating: 4.5,
+        totalReviews: 42,
+        phoneNumber: '+65 6XXX XXXX',
+        email: 'hello@localcafe.sg',
+        website: 'https://localcafe.sg',
+        priceRange: '$$',
         hours: {
           monday: { open: '07:00', close: '22:00' },
           tuesday: { open: '07:00', close: '22:00' },
@@ -122,6 +172,12 @@ export class PersistentStorage {
         reputationScore: 96,
         acceptsBasePay: true,
         avatarUrl: '📱',
+        verified: true,
+        averageRating: 4.2,
+        totalReviews: 28,
+        phoneNumber: '+65 6XXX YYYY',
+        email: 'support@techmart.sg',
+        priceRange: '$$$',
         hours: {
           monday: { open: '10:00', close: '20:00' },
           tuesday: { open: '10:00', close: '20:00' },
@@ -146,6 +202,12 @@ export class PersistentStorage {
         reputationScore: 94,
         acceptsBasePay: true,
         avatarUrl: '🧘‍♀️',
+        verified: true,
+        averageRating: 4.7,
+        totalReviews: 65,
+        phoneNumber: '+65 6XXX ZZZZ',
+        email: 'book@wellness.sg',
+        priceRange: '$$$$',
         hours: {
           monday: { open: '09:00', close: '21:00' },
           tuesday: { open: '09:00', close: '21:00' },
@@ -160,7 +222,7 @@ export class PersistentStorage {
         id: '4',
         name: 'Marina Bay Event Space',
         description: 'Premium venue for meetups and crypto events',
-        category: 'entertainment',
+        category: 'fun',
         address: '2 Marina Bay Dr, Singapore',
         latitude: 1.2838,
         longitude: 103.8612,
@@ -170,6 +232,12 @@ export class PersistentStorage {
         reputationScore: 99,
         acceptsBasePay: true,
         avatarUrl: '🎪',
+        verified: true,
+        averageRating: 4.9,
+        totalReviews: 12,
+        phoneNumber: '+65 6XXX AAAA',
+        email: 'events@marina.sg',
+        priceRange: '$$$$',
         hours: {
           monday: { open: '10:00', close: '23:00' },
           tuesday: { open: '10:00', close: '23:00' },
@@ -191,12 +259,10 @@ export class PersistentStorage {
         authorName: 'CryptoFoodie',
         content: 'Just had an amazing coffee at LocalCafe NTU! ☕ Paid with Base and got instant loyalty points. The future of payments is here! 🚀 #BasePay #LocalBase',
         businessId: '1',
-        businessName: 'LocalCafe NTU',
         timestamp: Date.now() - 1800000, // 30 mins ago
         likes: 12,
         comments: 3,
         tags: ['coffee', 'basepay', 'ntu'],
-        liked: false,
       },
       {
         id: '2',
@@ -204,7 +270,6 @@ export class PersistentStorage {
         authorName: 'TechStudent',
         content: 'TechRepair Hub fixed my laptop screen in 2 hours and accepted USDC payment! 💻 No more cash or card hassles. Supporting local businesses with crypto feels great! 💪',
         businessId: '2',
-        businessName: 'TechRepair Hub',
         timestamp: Date.now() - 3600000, // 1 hour ago
         likes: 8,
         comments: 2,
@@ -250,6 +315,76 @@ export class PersistentStorage {
         comments: 15,
         tags: ['local', 'event', 'community', 'cleanup'],
       },
+    ];
+  }
+
+  private static getDefaultReviews(): Review[] {
+    return [
+      {
+        id: '1',
+        businessId: '1',
+        userId: '0xuser1',
+        userAddress: '0xuser1',
+        userName: 'CoffeeLover',
+        rating: 5,
+        comment: 'Amazing coffee and great atmosphere! The crypto payment was super smooth and fast. Definitely coming back!',
+        timestamp: Date.now() - 86400000, // 1 day ago
+        verified: true,
+        helpful: 8,
+        photos: []
+      },
+      {
+        id: '2',
+        businessId: '1',
+        userId: '0xuser2',
+        userAddress: '0xuser2',
+        userName: 'StudyBuddy',
+        rating: 4,
+        comment: 'Perfect spot for studying. Good WiFi and the staff is friendly. Love that they accept crypto payments!',
+        timestamp: Date.now() - 172800000, // 2 days ago
+        verified: true,
+        helpful: 5,
+        photos: []
+      },
+      {
+        id: '3',
+        businessId: '2',
+        userId: '0xuser3',
+        userAddress: '0xuser3',
+        userName: 'TechEnthusiast',
+        rating: 5,
+        comment: 'Fixed my phone screen in record time and the price was very fair. USDC payment made it super convenient!',
+        timestamp: Date.now() - 259200000, // 3 days ago
+        verified: true,
+        helpful: 12,
+        photos: []
+      },
+      {
+        id: '4',
+        businessId: '3',
+        userId: '0xuser4',
+        userAddress: '0xuser4',
+        userName: 'WellnessSeeker',
+        rating: 5,
+        comment: 'The best spa experience I\'ve had! The massage was incredible and paying with crypto was so modern and easy.',
+        timestamp: Date.now() - 345600000, // 4 days ago
+        verified: true,
+        helpful: 15,
+        photos: []
+      },
+      {
+        id: '5',
+        businessId: '4',
+        userId: '0xuser5',
+        userAddress: '0xuser5',
+        userName: 'EventPlanner',
+        rating: 4,
+        comment: 'Great venue for our crypto meetup! Professional setup and the team was very accommodating.',
+        timestamp: Date.now() - 432000000, // 5 days ago
+        verified: true,
+        helpful: 7,
+        photos: []
+      }
     ];
   }
 }

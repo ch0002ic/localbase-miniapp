@@ -1,6 +1,7 @@
-const counterContractAddress = '0x008eDa6391926f3Fe570f0b163A9082B713322e6'; // your deployed contract address
+// const counterContractAddress = '0x008eDa6391926f3Fe570f0b163A9082B713322e6'; // your deployed contract address
 
-// ABI for the Counter contract
+// ABI for the Counter contract - keeping for future use
+/*
 const counterContractAbi = [
   {
     type: 'function',
@@ -15,8 +16,8 @@ const counterContractAbi = [
     inputs: [],
     outputs: [
       {
-        name: '',
         type: 'uint256',
+        name: '',
         internalType: 'uint256',
       },
     ],
@@ -27,8 +28,8 @@ const counterContractAbi = [
     name: 'setNumber',
     inputs: [
       {
-        name: 'newNumber',
         type: 'uint256',
+        name: 'newNumber',
         internalType: 'uint256',
       },
     ],
@@ -36,7 +37,10 @@ const counterContractAbi = [
     stateMutability: 'nonpayable',
   },
 ] as const;
+*/
 
+// Keeping for future use
+/*
 export const calls = [
   {
     to: counterContractAddress,
@@ -44,3 +48,6 @@ export const calls = [
     value: BigInt(0),
   },
 ];
+*/
+
+export const calls = []; // Empty for now

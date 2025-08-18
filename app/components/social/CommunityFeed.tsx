@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import { useMiniKit, useComposeCast, useViewProfile } from '@coinbase/onchainkit/minikit';
+import { useMiniKit, useComposeCast } from '@coinbase/onchainkit/minikit';
 import { MessageCircle, Heart, Share2, MapPin, Clock, Users, TrendingUp } from 'lucide-react';
 import { CommunityPost } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
@@ -11,7 +11,6 @@ export function CommunityFeed() {
   const { address, isConnected } = useAccount();
   const { context } = useMiniKit();
   const { composeCast } = useComposeCast();
-  const viewProfile = useViewProfile();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [newPost, setNewPost] = useState('');
   const [loading, setLoading] = useState(true);
@@ -28,44 +27,7 @@ export function CommunityFeed() {
     timestamp: number;
   }>}>({});
   
-  useEffect(() => {
-    fetchPosts();
-  }, [activeTab]); // Re-fetch when tab changes
-  
-  // Watch for wallet connection changes and update liked posts accordingly
-  useEffect(() => {
-    if (isConnected && address) {
-      // User just connected wallet - load their previous likes
-      console.log(`Wallet connected: ${address}, loading previous likes...`);
-      const userLikesKey = `user_likes_${address}`;
-      const userLikes = localStorage.getItem(userLikesKey);
-      if (userLikes) {
-        try {
-          const likedPostIds = JSON.parse(userLikes);
-          setLikedPosts(new Set(likedPostIds));
-          console.log(`✅ Loaded ${likedPostIds.length} previous likes for user ${address}`);
-          
-          // Show a subtle notification that likes were restored
-          if (likedPostIds.length > 0) {
-            console.log(`🔄 Restored your ${likedPostIds.length} previous likes`);
-          }
-        } catch (error) {
-          console.error('Error loading user likes:', error);
-          setLikedPosts(new Set());
-        }
-      } else {
-        // No previous likes found
-        setLikedPosts(new Set());
-        console.log(`✨ Welcome! No previous likes found for user ${address}`);
-      }
-    } else {
-      // User disconnected wallet - clear liked posts state
-      console.log('🔌 Wallet disconnected, clearing liked posts state');
-      setLikedPosts(new Set());
-    }
-  }, [isConnected, address]);
-  
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
       const apiPosts = await LocalBaseAPI.getCommunityPosts();
@@ -126,7 +88,44 @@ export function CommunityFeed() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+  
+  // Watch for wallet connection changes and update liked posts accordingly
+  useEffect(() => {
+    if (isConnected && address) {
+      // User just connected wallet - load their previous likes
+      console.log(`Wallet connected: ${address}, loading previous likes...`);
+      const userLikesKey = `user_likes_${address}`;
+      const userLikes = localStorage.getItem(userLikesKey);
+      if (userLikes) {
+        try {
+          const likedPostIds = JSON.parse(userLikes);
+          setLikedPosts(new Set(likedPostIds));
+          console.log(`✅ Loaded ${likedPostIds.length} previous likes for user ${address}`);
+          
+          // Show a subtle notification that likes were restored
+          if (likedPostIds.length > 0) {
+            console.log(`🔄 Restored your ${likedPostIds.length} previous likes`);
+          }
+        } catch (error) {
+          console.error('Error loading user likes:', error);
+          setLikedPosts(new Set());
+        }
+      } else {
+        // No previous likes found
+        setLikedPosts(new Set());
+        console.log(`✨ Welcome! No previous likes found for user ${address}`);
+      }
+    } else {
+      // User disconnected wallet - clear liked posts state
+      console.log('🔌 Wallet disconnected, clearing liked posts state');
+      setLikedPosts(new Set());
+    }
+  }, [isConnected, address]);
   
   const handleLike = (postId: string) => {
     if (!isConnected || !address) {
@@ -369,6 +368,7 @@ export function CommunityFeed() {
         alert('Post link copied to clipboard!');
       }
     } catch (error) {
+      console.error('Error sharing post:', error);
       // If all else fails, show share options
       const shareText = `Check out this post on LocalBase:\n\n"${post.content}"\n\n- ${post.authorName}\n\n${window.location.href}`;
       

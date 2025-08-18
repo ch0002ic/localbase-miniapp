@@ -2,19 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { BusinessCard } from './BusinessCard';
+import { BusinessProfile } from './BusinessProfile';
 import { RegisterBusinessModal } from './RegisterBusinessModal';
 import { Business, BusinessCategory } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
 import { MockModeBanner } from '../MockModeBanner';
-import { MapPin, Search, Filter, Plus } from 'lucide-react';
+import { MapPin, Search, Plus } from 'lucide-react';
 
 export function BusinessDirectory() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<BusinessCategory | 'all'>('all');
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   
   const categories: Array<{ id: BusinessCategory | 'all'; label: string; icon: string }> = [
     { id: 'all', label: 'All', icon: '🏢' },
@@ -66,6 +67,24 @@ export function BusinessDirectory() {
     const matchesCategory = selectedCategory === 'all' || business.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleViewProfile = (businessId: string) => {
+    setSelectedBusinessId(businessId);
+  };
+
+  const handleBackToDirectory = () => {
+    setSelectedBusinessId(null);
+  };
+
+  // If a business is selected, show its profile
+  if (selectedBusinessId) {
+    return (
+      <BusinessProfile 
+        businessId={selectedBusinessId}
+        onBack={handleBackToDirectory}
+      />
+    );
+  }
   
   if (loading) {
     return (
@@ -168,6 +187,7 @@ export function BusinessDirectory() {
               key={business.id} 
               business={business} 
               onBusinessUpdate={fetchBusinesses}
+              onViewProfile={handleViewProfile}
             />
           ))}
         </div>

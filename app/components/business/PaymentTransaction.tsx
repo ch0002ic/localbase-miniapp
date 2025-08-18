@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { parseEther } from 'viem';
 import {
   Transaction,
@@ -26,8 +25,6 @@ export function PaymentTransaction({
   onSuccess, 
   onError 
 }: PaymentTransactionProps) {
-  const [transactionId, setTransactionId] = useState<string>('');
-
   const handleOnStatus = (status: LifecycleStatus) => {
     console.log('Payment transaction status:', status);
     

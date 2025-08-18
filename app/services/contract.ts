@@ -65,7 +65,7 @@ export const LOCAL_BASE_PAYMENT_ABI = [
 ] as const;
 
 // Contract address from configuration
-export const LOCAL_BASE_PAYMENT_ADDRESS = CONTRACT_CONFIG.CONTRACT_ADDRESS as const;
+export const LOCAL_BASE_PAYMENT_ADDRESS = CONTRACT_CONFIG.CONTRACT_ADDRESS as `0x${string}`;
 
 // Mock mode configuration
 const MOCK_MODE = !CONTRACT_CONFIG.USE_REAL_CONTRACT;
@@ -122,10 +122,12 @@ export class LocalBaseContract {
       try {
         await walletClient.switchChain({ id: baseSepolia.id });
       } catch (switchError) {
+        console.error('Error switching chain:', switchError);
         // If switching fails, try to add the network
         try {
           await walletClient.addChain({ chain: baseSepolia });
         } catch (addError) {
+          console.error('Error adding chain:', addError);
           throw new Error(`Please switch to Base Sepolia network manually. Current network: ${chainId}, Required: ${baseSepolia.id}`);
         }
       }
@@ -167,10 +169,12 @@ export class LocalBaseContract {
       try {
         await walletClient.switchChain({ id: baseSepolia.id });
       } catch (switchError) {
+        console.error('Error switching chain:', switchError);
         // If switching fails, try to add the network
         try {
           await walletClient.addChain({ chain: baseSepolia });
         } catch (addError) {
+          console.error('Error adding chain:', addError);
           throw new Error(`Please switch to Base Sepolia network manually. Current network: ${chainId}, Required: ${baseSepolia.id}`);
         }
       }

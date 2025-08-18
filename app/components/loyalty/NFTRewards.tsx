@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { Award, Gift, Star, ShoppingBag } from 'lucide-react';
 
@@ -31,15 +31,17 @@ export function NFTRewards() {
   const [usedRewards, setUsedRewards] = useState<{[tokenId: string]: number}>({});
   const [usingReward, setUsingReward] = useState<{[tokenId: string]: boolean}>({});
   
-  useEffect(() => {
-    if (isConnected && address) {
-      fetchLoyaltyNFTs();
-    } else {
-      setLoading(false);
+  const loadUsedRewards = () => {
+    if (!address) return;
+    
+    const usedRewardsKey = `used_rewards_${address}`;
+    const stored = localStorage.getItem(usedRewardsKey);
+    if (stored) {
+      setUsedRewards(JSON.parse(stored));
     }
-  }, [address, isConnected]);
-  
-  const fetchLoyaltyNFTs = async () => {
+  };
+
+  const fetchLoyaltyNFTs = useCallback(async () => {
     setLoading(true);
     try {
       // Mock data for demonstration
@@ -93,17 +95,15 @@ export function NFTRewards() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [address]);
 
-  const loadUsedRewards = () => {
-    if (!address) return;
-    
-    const usedRewardsKey = `used_rewards_${address}`;
-    const stored = localStorage.getItem(usedRewardsKey);
-    if (stored) {
-      setUsedRewards(JSON.parse(stored));
+  useEffect(() => {
+    if (isConnected && address) {
+      fetchLoyaltyNFTs();
+    } else {
+      setLoading(false);
     }
-  };
+  }, [fetchLoyaltyNFTs, address, isConnected]);
 
   const canUseReward = (tokenId: string) => {
     const lastUsed = usedRewards[tokenId];
@@ -129,7 +129,7 @@ export function NFTRewards() {
     return `${hours}h ${minutes}m`;
   };
 
-  const useReward = async (nft: LoyaltyNFT) => {
+  const redeemReward = async (nft: LoyaltyNFT) => {
     if (!address || !canUseReward(nft.tokenId)) return;
     
     setUsingReward(prev => ({ ...prev, [nft.tokenId]: true }));
@@ -295,7 +295,7 @@ export function NFTRewards() {
                 </div>
                 
                 <button 
-                  onClick={() => useReward(nft)}
+                  onClick={() => redeemReward(nft)}
                   disabled={!canUseReward(nft.tokenId) || usingReward[nft.tokenId]}
                   className={`w-full py-2 rounded-lg transition-colors font-medium ${
                     canUseReward(nft.tokenId) && !usingReward[nft.tokenId]

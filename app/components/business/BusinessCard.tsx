@@ -6,19 +6,19 @@ import { useMiniKit, useComposeCast, useOpenUrl } from '@coinbase/onchainkit/min
 import { Business } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
 import { PaymentTransaction } from './PaymentTransaction';
-import { Star, MapPin, Clock, ExternalLink, CreditCard, Loader2, Share2 } from 'lucide-react';
+import { Star, MapPin, Clock, ExternalLink, CreditCard, Share2 } from 'lucide-react';
 
 interface BusinessCardProps {
   business: Business;
   onBusinessUpdate?: () => void; // Callback to refresh parent component
+  onViewProfile?: (businessId: string) => void; // Navigate to profile
 }
 
-export function BusinessCard({ business, onBusinessUpdate }: BusinessCardProps) {
-  const [imageError, setImageError] = useState(false);
+export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: BusinessCardProps) {
   const [paymentAmount, setPaymentAmount] = useState('0.01'); // Default payment amount
   const [shownDialogs, setShownDialogs] = useState<Set<string>>(new Set()); // Track shown dialogs
   const [processedPayments, setProcessedPayments] = useState<Set<string>>(new Set()); // Track processed payments
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { context } = useMiniKit();
   const { composeCast } = useComposeCast();
   const openUrl = useOpenUrl();
@@ -43,14 +43,13 @@ export function BusinessCard({ business, onBusinessUpdate }: BusinessCardProps) 
   
   const handleCardClick = () => {
     // Navigate to business detail page
-    console.log('Navigate to business:', business.id);
+    if (onViewProfile) {
+      onViewProfile(business.id);
+    }
   };
 
   const handlePaymentSuccess = async () => {
     console.log(`🔵 handlePaymentSuccess called for ${business.name} (ID: ${business.id})`);
-    
-    // Generate unique payment ID to prevent duplicate processing
-    const paymentId = `payment-${business.id}-${Date.now()}`;
     
     // Check if we've already processed a payment for this business in this session
     const sessionPaymentId = `session-${business.id}`;

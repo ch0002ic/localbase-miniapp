@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ExternalLink } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { CONTRACT_CONFIG } from '../config/contract';
 
 export function MockModeBanner() {
