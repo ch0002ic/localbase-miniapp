@@ -15,7 +15,7 @@ interface BusinessCardProps {
 }
 
 export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: BusinessCardProps) {
-  const [paymentAmount, setPaymentAmount] = useState('0.01'); // Default payment amount
+  const [paymentAmount, setPaymentAmount] = useState('0.001'); // Smaller default for testing
   const [shownDialogs, setShownDialogs] = useState<Set<string>>(new Set()); // Track shown dialogs
   const [processedPayments, setProcessedPayments] = useState<Set<string>>(new Set()); // Track processed payments
   const { isConnected } = useAccount();
@@ -197,11 +197,30 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
             type="number"
             step="0.001"
             min="0.001"
+            max="1.0"
             value={paymentAmount}
-            onChange={(e) => setPaymentAmount(e.target.value)}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value);
+              console.log('💳 Payment amount changed:', { value, input: e.target.value });
+              
+              if (value > 1.0) {
+                alert('⚠️ Maximum testnet payment is 1.0 ETH. Please use a smaller amount for testing.');
+                setPaymentAmount('0.001');
+              } else if (value > 0.1) {
+                const confirmed = confirm(`⚠️ You're about to pay ${value} ETH (~$${(value * 4000).toFixed(2)} USD estimated).\n\nThis is a real transaction on Base Sepolia testnet.\n\nContinue with this amount?`);
+                if (!confirmed) {
+                  setPaymentAmount('0.001');
+                  return;
+                }
+                setPaymentAmount(e.target.value);
+              } else {
+                setPaymentAmount(e.target.value);
+              }
+            }}
             className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm"
-            placeholder="Amount (ETH)"
+            placeholder="Amount (ETH) - Max: 1.0"
             onClick={(e) => e.stopPropagation()}
+            title="Enter payment amount in ETH (max 1.0 for testnet)"
           />
         </div>
         <div className="flex gap-2">

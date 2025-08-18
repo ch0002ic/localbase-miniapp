@@ -28,6 +28,14 @@ export function PaymentTransaction({
   onSuccess, 
   onError 
 }: PaymentTransactionProps) {
+  // Debug logging for payment amount
+  console.log('💰 PaymentTransaction Debug:', { 
+    businessName: business.name, 
+    paymentAmount: amount, 
+    paymentValueInWei: parseEther(amount).toString(),
+    smartContractEnabled: SmartContractService.isEnabled()
+  });
+
   const handleOnStatus = (status: LifecycleStatus) => {
     console.log('Payment transaction status:', status);
     
@@ -37,11 +45,41 @@ export function PaymentTransaction({
         onSuccess();
       }
     } else if (status.statusName === 'error') {
-      console.error('❌ Payment failed:', status);
-      if (onError) {
-        const errorMessage = typeof status.statusData?.error === 'string' 
-          ? status.statusData.error 
-          : 'Payment failed';
+      console.log('Payment failed with status:', status);
+      
+      // Better error handling with null checks
+      let errorMessage = 'Payment failed';
+      
+      if (status.statusData && typeof status.statusData === 'object') {
+        // Handle different error types
+        const errorData = status.statusData as any;
+        
+        if (typeof errorData.error === 'string') {
+          errorMessage = errorData.error;
+        } else if (typeof errorData.message === 'string') {
+          errorMessage = errorData.message;
+        } else if (errorData.code) {
+          // Handle specific error codes (can be string or number)
+          const code = String(errorData.code);
+          if (code === 'INSUFFICIENT_FUNDS' || errorMessage.toLowerCase().includes('insufficient')) {
+            errorMessage = 'Insufficient ETH balance. Please get Base Sepolia ETH from the faucets at the top of the page and try again.';
+          } else if (code === 'USER_REJECTED' || code === '4001') {
+            errorMessage = 'Transaction was cancelled by user.';
+          } else {
+            errorMessage = `Payment failed (Code: ${code})`;
+          }
+        } else {
+          errorMessage = 'Payment failed. Please try again.';
+        }
+      } else {
+        // Handle case where statusData is empty or null
+        errorMessage = 'Payment failed. Please check your wallet connection and try again.';
+      }
+      
+      console.warn('Processed error message:', errorMessage);
+      
+      // Only call onError for actual errors, not user cancellations
+      if (onError && !errorMessage.includes('cancelled')) {
         onError(errorMessage);
       }
     }

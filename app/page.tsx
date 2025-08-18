@@ -65,7 +65,6 @@ export default function LocalBase() {
             )}
             <NetworkStatus />
             <SmartContractStatus />
-            <FundingHelper />
             <Wallet>
               <ConnectWallet>
                 <Avatar className="h-8 w-8" />
@@ -84,6 +83,11 @@ export default function LocalBase() {
           </div>
         </div>
       </header>
+
+      {/* Funding Helper Banner */}
+      <div className="max-w-6xl mx-auto px-4">
+        <FundingHelper />
+      </div>
       
       {/* Navigation */}
       <nav className="bg-white border-b sticky top-0 z-10">

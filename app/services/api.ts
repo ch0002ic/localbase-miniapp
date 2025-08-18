@@ -4,6 +4,9 @@ import { Business, CommunityPost, Review, BusinessAnalytics } from '../types/loc
 export class LocalBaseAPI {
   static async getBusinesses(category?: string): Promise<Business[]> {
     try {
+      // Initialize default data if no businesses exist
+      PersistentStorage.initializeDefaultData();
+      
       const businesses = await PersistentStorage.getStoredBusinesses();
       
       // Filter by category if specified
@@ -67,6 +70,9 @@ export class LocalBaseAPI {
 
   static async getCommunityPosts(): Promise<CommunityPost[]> {
     try {
+      // Initialize default data if no posts exist
+      PersistentStorage.initializeDefaultData();
+      
       return await PersistentStorage.getStoredPosts();
     } catch (error) {
       console.error('Error fetching community posts:', error);
