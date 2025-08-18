@@ -19,6 +19,7 @@ import { BusinessDirectory } from './components/business/BusinessDirectory';
 import { NFTRewards } from './components/loyalty/NFTRewards';
 import { CommunityFeed } from './components/social/CommunityFeed';
 import { NetworkStatus } from './components/NetworkStatus';
+import { SmartContractStatus } from './components/SmartContractStatus';
 
 export default function LocalBase() {
   const [activeTab, setActiveTab] = useState('discover');
@@ -62,6 +63,7 @@ export default function LocalBase() {
               </div>
             )}
             <NetworkStatus />
+            <SmartContractStatus />
             <Wallet>
               <ConnectWallet>
                 <Avatar className="h-8 w-8" />

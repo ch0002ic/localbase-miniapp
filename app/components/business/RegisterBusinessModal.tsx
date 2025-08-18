@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
-import { localBaseContract } from '../../services/contract';
+import { SmartContractService } from '../../services/smartContract';
 import { LocalBaseAPI } from '../../services/api';
 import { BusinessCategory } from '../../types/localbase';
 import { X, Loader2, CheckCircle } from 'lucide-react';
@@ -48,15 +48,23 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
     try {
       console.log('Registering business:', { businessId: businessId.trim(), businessName: businessName.trim() });
       
-      const receipt = await localBaseContract.registerBusiness(
-        businessId.trim(),
-        businessName.trim(),
-        address
-      );
+      let receipt = null;
       
-      console.log('Business registration successful:', receipt);
+      // Register on-chain if smart contract mode is enabled
+      if (SmartContractService.isEnabled()) {
+        try {
+          receipt = await SmartContractService.registerBusiness(
+            businessId.trim(),
+            businessName.trim()
+          );
+          console.log('✅ Business registered on-chain:', receipt);
+        } catch (contractError) {
+          console.warn('⚠️ On-chain registration failed, continuing with local storage:', contractError);
+          // Continue with local storage even if on-chain fails
+        }
+      }
       
-      // Also save to localStorage for demo mode
+      // Always save to localStorage for demo/backup purposes
       await LocalBaseAPI.addBusiness({
         id: businessId.trim(),
         name: businessName.trim(),
@@ -75,7 +83,10 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
       setSuccess(true);
       
       // Show success message
-      console.log('✅ Business registration and storage successful!', receipt);
+      const successMsg = receipt 
+        ? `✅ Business registered on-chain: ${receipt}` 
+        : '✅ Business registered locally!';
+      console.log(successMsg);
       
       // Reset form after 2 seconds and close modal
       setTimeout(() => {

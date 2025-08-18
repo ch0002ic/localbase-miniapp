@@ -1,10 +1,10 @@
 // Contract configuration for LocalBase
 export const CONTRACT_CONFIG = {
   // Set to true to use real contract, false for mock mode
-  USE_REAL_CONTRACT: false, // Temporarily disabled until contract is funded and deployed
+  USE_REAL_CONTRACT: true, // ✅ ENABLED - Using real deployed contract
   
-  // LocalBasePayment contract address - update after deployment
-  CONTRACT_ADDRESS: '0xf80B102B28D174b1B90B15a8c496903Aa589e181', // LocalBasePayment contract on Base Sepolia (needs funding)
+  // LocalBasePayment contract address - deployed on Base Sepolia
+  CONTRACT_ADDRESS: '0xf80B102B28D174b1B90B15a8c496903Aa589e181', // ✅ DEPLOYED - LocalBasePayment contract on Base Sepolia
   
   // Network configuration
   NETWORK: {
