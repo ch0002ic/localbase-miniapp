@@ -1,12 +1,12 @@
-// Contract configuration for LocalBase
+// Contract configuration for LocalBase - HACKATHON READY
 export const CONTRACT_CONFIG = {
-  // Set to true to use real contract, false for mock mode
-  USE_REAL_CONTRACT: false, // ⚠️ TEMPORARILY DISABLED - Contract deployment incomplete
+  // ✅ HACKATHON MODE: Real contract deployment ACTIVE
+  USE_REAL_CONTRACT: true, // 🚀 ENABLED - Real blockchain transactions!
   
-  // LocalBasePayment contract address - needs proper deployment
-  CONTRACT_ADDRESS: '0xf80B102B28D174b1B90B15a8c496903Aa589e181', // ⚠️ NOT DEPLOYED - exists only in local files
+  // ✅ DEPLOYED CONTRACT ADDRESS - Base Sepolia
+  CONTRACT_ADDRESS: '0xd7dA1c82D2c2Ad373a7a6b1e9DE7883E760Dea7C', // ✅ DEPLOYED & VERIFIED
   
-  // Network configuration
+  // Network configuration - Base Sepolia for hackathon
   NETWORK: {
     name: 'Base Sepolia',
     chainId: 84532,

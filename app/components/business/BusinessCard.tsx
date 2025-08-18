@@ -6,6 +6,7 @@ import { useMiniKit, useComposeCast, useOpenUrl } from '@coinbase/onchainkit/min
 import { Business } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
 import { PaymentTransaction } from './PaymentTransaction';
+import { VerificationBadge } from '../VerificationBadge';
 import { Star, MapPin, Clock, ExternalLink, CreditCard, Share2 } from 'lucide-react';
 
 interface BusinessCardProps {
@@ -141,6 +142,15 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
               <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                 {business.name}
               </h3>
+              <VerificationBadge 
+                business={{
+                  id: business.id,
+                  name: business.name,
+                  verified: business.id.includes('test') || business.reputationScore > 85, // Hackathon demo logic
+                  hackathonPartner: ['test9', 'test8', 'test7'].includes(business.id), // Demo partners
+                  transactionCount: business.totalTransactions
+                }}
+              />
               <div className="flex items-center gap-2 mt-1">
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(business.category)}`}>
                   {business.category}

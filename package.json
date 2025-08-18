@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy:hackathon": "cd contracts && ./quick-deploy.sh",
+    "test:contracts": "cd contracts && forge test --gas-report"
   },
   "dependencies": {
     "@coinbase/cbpay-js": "^2.4.0",
