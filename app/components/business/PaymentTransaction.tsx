@@ -52,7 +52,7 @@ export function PaymentTransaction({
       
       if (status.statusData && typeof status.statusData === 'object') {
         // Handle different error types
-        const errorData = status.statusData as any;
+        const errorData = status.statusData as { error?: string; message?: string; code?: string | number };
         
         if (typeof errorData.error === 'string') {
           errorMessage = errorData.error;

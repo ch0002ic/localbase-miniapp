@@ -21,7 +21,6 @@ import { CommunityFeed } from './components/social/CommunityFeed';
 import { NetworkStatus } from './components/NetworkStatus';
 import { SmartContractStatus } from './components/SmartContractStatus';
 import { FundingHelper } from './components/FundingHelper';
-import { HackathonStatus } from './components/HackathonStatus';
 
 export default function LocalBase() {
   const [activeTab, setActiveTab] = useState('discover');
@@ -84,11 +83,6 @@ export default function LocalBase() {
           </div>
         </div>
       </header>
-
-      {/* Hackathon Status Banner */}
-      <div className="max-w-6xl mx-auto px-4">
-        <HackathonStatus />
-      </div>
 
       {/* Funding Helper Banner */}
       <div className="max-w-6xl mx-auto px-4">
