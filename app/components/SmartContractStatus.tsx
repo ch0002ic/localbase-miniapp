@@ -25,16 +25,28 @@ export function SmartContractStatus() {
       
       if (enabled && isConnected && address) {
         try {
+          console.log('🔄 Loading contract info for address:', address);
           const initialized = await SmartContractService.initialize();
-          const userSpent = await SmartContractService.getUserTotalSpent(address);
           
-          setContractInfo({
-            enabled,
-            initialized,
-            userSpent
-          });
+          if (initialized) {
+            const userSpent = await SmartContractService.getUserTotalSpent(address);
+            console.log('✅ Contract info loaded successfully');
+            
+            setContractInfo({
+              enabled,
+              initialized: true,
+              userSpent
+            });
+          } else {
+            console.warn('⚠️ Contract initialization failed');
+            setContractInfo({
+              enabled,
+              initialized: false,
+              userSpent: '0'
+            });
+          }
         } catch (error) {
-          console.error('Failed to load contract info:', error);
+          console.error('❌ Failed to load contract info:', error);
           setContractInfo({
             enabled,
             initialized: false,

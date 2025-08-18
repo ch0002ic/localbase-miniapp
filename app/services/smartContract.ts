@@ -61,6 +61,12 @@ export class SmartContractService {
     }
 
     try {
+      // First check if business already exists
+      const exists = await this.contract.businessExists(businessId);
+      if (exists) {
+        throw new Error(`Business with ID "${businessId}" already exists on-chain`);
+      }
+
       console.log(`📝 Registering business on-chain: ${businessName} (ID: ${businessId})`);
       
       const tx = await this.contract.registerBusiness(businessId, businessName);
@@ -72,6 +78,18 @@ export class SmartContractService {
       return receipt.hash;
     } catch (error) {
       console.error('❌ Failed to register business:', error);
+      
+      // Provide user-friendly error messages
+      if (error instanceof Error) {
+        if (error.message.includes('already exists')) {
+          throw new Error('This business ID is already registered on the blockchain. Please choose a different ID.');
+        } else if (error.message.includes('insufficient funds')) {
+          throw new Error('Insufficient ETH balance. Please get some Base Sepolia ETH from a faucet.');
+        } else if (error.message.includes('user rejected')) {
+          throw new Error('Transaction was cancelled by user.');
+        }
+      }
+      
       throw error;
     }
   }
@@ -91,6 +109,12 @@ export class SmartContractService {
     }
 
     try {
+      // First check if business exists
+      const exists = await this.contract.businessExists(businessId);
+      if (!exists) {
+        throw new Error(`Business with ID "${businessId}" not found on-chain`);
+      }
+
       const ethAmount = parseEther(amount);
       console.log(`💳 Making payment on-chain: ${amount} ETH to business ${businessId}`);
       
@@ -103,6 +127,20 @@ export class SmartContractService {
       return receipt.hash;
     } catch (error) {
       console.error('❌ Payment failed:', error);
+      
+      // Provide user-friendly error messages
+      if (error instanceof Error) {
+        if (error.message.includes('insufficient funds')) {
+          throw new Error('Insufficient ETH balance. Please get some Base Sepolia ETH from a faucet.');
+        } else if (error.message.includes('user rejected')) {
+          throw new Error('Transaction was cancelled by user.');
+        } else if (error.message.includes('not found')) {
+          throw new Error('Business not found on blockchain. It may need to be registered first.');
+        } else if (error.message.includes('not active')) {
+          throw new Error('This business is currently inactive and cannot receive payments.');
+        }
+      }
+      
       throw error;
     }
   }
@@ -172,7 +210,11 @@ export class SmartContractService {
     }
 
     if (!this.contract) {
-      await this.initialize();
+      const initialized = await this.initialize();
+      if (!initialized) {
+        console.warn('⚠️ Contract not initialized, returning 0 for user spending');
+        return '0';
+      }
     }
 
     if (!this.contract) {
@@ -180,10 +222,31 @@ export class SmartContractService {
     }
 
     try {
+      // Add validation for address format
+      if (!userAddress || !userAddress.startsWith('0x')) {
+        console.warn('⚠️ Invalid user address format:', userAddress);
+        return '0';
+      }
+
+      console.log('🔍 Getting user total spent for:', userAddress);
       const spent = await this.contract.getUserTotalSpent(userAddress);
-      return formatEther(spent);
+      
+      // Handle case where spent might be undefined or null
+      if (!spent) {
+        console.log('📊 No spending data found for user, returning 0');
+        return '0';
+      }
+      
+      const formattedSpent = formatEther(spent);
+      console.log('📊 User total spent:', formattedSpent, 'ETH');
+      return formattedSpent;
     } catch (error) {
       console.error('❌ Failed to get user spending:', error);
+      // Check if it's a contract call error (user hasn't spent anything yet)
+      if (error instanceof Error && error.message.includes('BAD_DATA')) {
+        console.log('🔍 User likely has no spending history, returning 0');
+        return '0';
+      }
       return '0';
     }
   }

@@ -20,6 +20,7 @@ import { NFTRewards } from './components/loyalty/NFTRewards';
 import { CommunityFeed } from './components/social/CommunityFeed';
 import { NetworkStatus } from './components/NetworkStatus';
 import { SmartContractStatus } from './components/SmartContractStatus';
+import { FundingHelper } from './components/FundingHelper';
 
 export default function LocalBase() {
   const [activeTab, setActiveTab] = useState('discover');
@@ -64,6 +65,7 @@ export default function LocalBase() {
             )}
             <NetworkStatus />
             <SmartContractStatus />
+            <FundingHelper />
             <Wallet>
               <ConnectWallet>
                 <Avatar className="h-8 w-8" />
