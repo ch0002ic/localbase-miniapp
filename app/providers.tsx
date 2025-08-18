@@ -4,7 +4,7 @@ import { baseSepolia } from 'wagmi/chains';
 import { MiniKitProvider } from '@coinbase/onchainkit/minikit';
 import type { ReactNode } from 'react';
 
-// Step 2: Full MiniKitProvider configuration
+// Full MiniKitProvider configuration
 export function Providers(props: { children: ReactNode }) {
   return (
     <MiniKitProvider
