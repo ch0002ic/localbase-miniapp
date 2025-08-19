@@ -516,6 +516,19 @@ export class PersistentStorage {
       }
     ];
   }
+
+  // Clear all stored data (use with caution)
+  static clearAllData(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(this.BUSINESSES_KEY);
+      localStorage.removeItem(this.POSTS_KEY);
+      localStorage.removeItem(this.REVIEWS_KEY);
+      console.log('✅ Cleared all LocalBase data');
+    } catch (error) {
+      console.error('Failed to clear data:', error);
+    }
+  }
 }
 
 export default PersistentStorage;

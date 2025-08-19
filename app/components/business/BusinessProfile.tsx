@@ -92,9 +92,22 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
     const hours = business.hours[day];
     if (hours.closed) return 'Closed';
     
-    // Format times properly (convert 00:00 to 24:00 for display)
     const openTime = hours.open;
-    const closeTime = hours.close === '00:00' ? '24:00' : hours.close;
+    const closeTime = hours.close;
+    
+    // Convert time strings to minutes for comparison
+    const timeToMinutes = (time: string) => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+    
+    const openMinutes = timeToMinutes(openTime);
+    const closeMinutes = timeToMinutes(closeTime);
+    
+    // If close time is earlier than open time, it crosses midnight
+    if (closeMinutes < openMinutes) {
+      return `${openTime} - ${closeTime} (+1)`;  // +1 indicates next day
+    }
     
     return `${openTime} - ${closeTime}`;
   };
@@ -111,14 +124,25 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
     const openTime = todayHours.open;
     const closeTime = todayHours.close;
     
-    // Handle midnight case (00:00 means end of day)
-    if (closeTime === '00:00') {
-      // Business closes at midnight, so check if current time is after open time
-      return currentTime >= openTime;
+    // Convert time strings to minutes for easier comparison
+    const timeToMinutes = (time: string) => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+    
+    const currentMinutes = timeToMinutes(currentTime);
+    const openMinutes = timeToMinutes(openTime);
+    const closeMinutes = timeToMinutes(closeTime);
+    
+    // Handle cross-midnight hours (e.g., 09:00 - 02:00 means 9am to 2am next day)
+    if (closeMinutes < openMinutes) {
+      // Business crosses midnight
+      // Open if current time is after opening OR before closing
+      return currentMinutes >= openMinutes || currentMinutes <= closeMinutes;
     }
     
-    // Handle cases where business closes before midnight
-    return currentTime >= openTime && currentTime <= closeTime;
+    // Normal hours (same day)
+    return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
   };
 
   if (loading) {
