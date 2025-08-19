@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { useMiniKit, useComposeCast } from '@coinbase/onchainkit/minikit';
-import { MessageCircle, Heart, Share2, MapPin, Clock, Users, TrendingUp } from 'lucide-react';
+import { MessageCircle, Heart, Share2, MapPin, Clock, Users, TrendingUp, Trash2 } from 'lucide-react';
 import { CommunityPost } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
 import { CommunityPostSkeleton } from '../ui/Skeleton';
@@ -384,6 +384,40 @@ export function CommunityFeed() {
     setNewComments(prev => ({ ...prev, [postId]: '' }));
   };
 
+  const deleteComment = async (postId: string, commentId: string) => {
+    if (!isConnected || !address) {
+      alert('Please connect your wallet to delete comments');
+      return;
+    }
+
+    try {
+      // Confirm deletion
+      const shouldDelete = confirm('Are you sure you want to delete this comment?');
+      if (!shouldDelete) return;
+
+      // Call API to delete comment (includes author verification)
+      await LocalBaseAPI.deleteComment(postId, commentId, address);
+
+      // Update local state
+      const currentComments = postComments[postId] || [];
+      const updatedComments = currentComments.filter(comment => comment.id !== commentId);
+      setPostComments(prev => ({ ...prev, [postId]: updatedComments }));
+
+      // Update post comments count
+      setPosts(posts.map(post => 
+        post.id === postId 
+          ? { ...post, comments: updatedComments.length }
+          : post
+      ));
+
+      console.log(`✅ Comment deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete comment';
+      alert(`❌ ${errorMessage}`);
+    }
+  };
+
   // Enhanced share function with MiniKit
   const handleShare = async (post: CommunityPost) => {
     const shareData = {
@@ -728,9 +762,21 @@ export function CommunityFeed() {
                         </div>
                         <div className="flex-1">
                           <div className="bg-gray-50 rounded-lg px-3 py-2">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-sm text-gray-900">{comment.author}</span>
-                              <span className="text-xs text-gray-500">{formatTimeAgo(comment.timestamp)}</span>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-sm text-gray-900">{comment.author}</span>
+                                <span className="text-xs text-gray-500">{formatTimeAgo(comment.timestamp)}</span>
+                              </div>
+                              {/* Delete button for comment author */}
+                              {isConnected && address && comment.author === `${address.slice(0, 6)}...${address.slice(-4)}` && (
+                                <button
+                                  onClick={() => deleteComment(post.id, comment.id)}
+                                  className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-gray-200"
+                                  title="Delete comment"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
                             </div>
                             <p className="text-sm text-gray-700">{comment.content}</p>
                           </div>

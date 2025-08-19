@@ -312,6 +312,85 @@ export class LocalBaseAPI {
     }
   }
 
+  // Comment management methods
+  static async deleteComment(postId: string, commentId: string, userAddress: string): Promise<void> {
+    try {
+      // Get comments from localStorage for community posts
+      const commentsKey = `comments_${postId}`;
+      const storedComments = localStorage.getItem(commentsKey);
+      
+      if (!storedComments) {
+        throw new Error('Comments not found');
+      }
+      
+      const comments = JSON.parse(storedComments);
+      const commentIndex = comments.findIndex((c: {id: string; author: string}) => c.id === commentId);
+      
+      if (commentIndex === -1) {
+        throw new Error('Comment not found');
+      }
+      
+      // Verify the comment belongs to the user (author validation)
+      const comment = comments[commentIndex];
+      const commentAuthor = comment.author;
+      const currentUserShort = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+      
+      if (commentAuthor !== currentUserShort) {
+        throw new Error('Unauthorized: You can only delete your own comments');
+      }
+      
+      // Remove the comment
+      comments.splice(commentIndex, 1);
+      
+      // Save updated comments back to localStorage
+      localStorage.setItem(commentsKey, JSON.stringify(comments));
+      
+      console.log(`✅ Comment ${commentId} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      throw error;
+    }
+  }
+
+  static async deleteReviewComment(reviewId: string, commentId: string, userAddress: string): Promise<void> {
+    try {
+      // For review comments, we'll store them in a similar localStorage pattern
+      const commentsKey = `review_comments_${reviewId}`;
+      const storedComments = localStorage.getItem(commentsKey);
+      
+      if (!storedComments) {
+        throw new Error('Review comments not found');
+      }
+      
+      const comments = JSON.parse(storedComments);
+      const commentIndex = comments.findIndex((c: {id: string; author: string}) => c.id === commentId);
+      
+      if (commentIndex === -1) {
+        throw new Error('Review comment not found');
+      }
+      
+      // Verify the comment belongs to the user
+      const comment = comments[commentIndex];
+      const commentAuthor = comment.author;
+      const currentUserShort = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+      
+      if (commentAuthor !== currentUserShort) {
+        throw new Error('Unauthorized: You can only delete your own comments');
+      }
+      
+      // Remove the comment
+      comments.splice(commentIndex, 1);
+      
+      // Save updated comments back to localStorage
+      localStorage.setItem(commentsKey, JSON.stringify(comments));
+      
+      console.log(`✅ Review comment ${commentId} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting review comment:', error);
+      throw error;
+    }
+  }
+
   private static async updateBusinessRating(businessId: string): Promise<void> {
     try {
       const reviews = await this.getBusinessReviews(businessId);
