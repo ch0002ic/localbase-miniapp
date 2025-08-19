@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { Review } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
-import { Star, ThumbsUp, Calendar, User, Send } from 'lucide-react';
+import { Star, ThumbsUp, Calendar, User, Send, CheckCircle } from 'lucide-react';
 
 interface ReviewsSectionProps {
   businessId: string;
@@ -20,7 +20,22 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
     photos: [] as string[]
   });
   const [submitting, setSubmitting] = useState(false);
+  const [showFeedback, setShowFeedback] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
   const { address, isConnected } = useAccount();
+
+  const showSuccessFeedback = (message: string) => {
+    setShowFeedback({ show: true, message, type: 'success' });
+    setTimeout(() => setShowFeedback({ show: false, message: '', type: 'success' }), 3000);
+  };
+
+  const showErrorFeedback = (message: string) => {
+    setShowFeedback({ show: true, message, type: 'error' });
+    setTimeout(() => setShowFeedback({ show: false, message: '', type: 'error' }), 3000);
+  };
 
   const renderStars = (rating: number, interactive = false, onRatingChange?: (rating: number) => void) => {
     return (
@@ -55,8 +70,10 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
       setNewReview({ rating: 5, comment: '', photos: [] });
       setShowReviewForm(false);
       onReviewSubmitted();
+      showSuccessFeedback('Review submitted successfully! ⭐');
     } catch (error) {
       console.error('Error submitting review:', error);
+      showErrorFeedback('Failed to submit review. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -72,10 +89,15 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
       const userLiked = await LocalBaseAPI.toggleReviewHelpful(reviewId, address);
       onReviewSubmitted(); // Refresh reviews
       
-      // Optional: Show feedback to user
-      console.log(userLiked ? 'You liked this review' : 'You removed your like');
+      // Show user feedback
+      if (userLiked) {
+        showSuccessFeedback('Thank you for your feedback! 👍');
+      } else {
+        showSuccessFeedback('Feedback removed');
+      }
     } catch (error) {
       console.error('Error voting helpful:', error);
+      showErrorFeedback('Failed to update vote. Please try again.');
     }
   };
 
@@ -103,6 +125,18 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
 
   return (
     <div className="space-y-6">
+      {/* Feedback Toast */}
+      {showFeedback.show && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg transition-all ${
+          showFeedback.type === 'success' 
+            ? 'bg-green-100 border border-green-200 text-green-800' 
+            : 'bg-red-100 border border-red-200 text-red-800'
+        }`}>
+          <CheckCircle className="w-5 h-5" />
+          <span className="font-medium">{showFeedback.message}</span>
+        </div>
+      )}
+
       {/* Reviews Summary */}
       <div className="bg-gray-50 rounded-lg p-6">
         <div className="flex items-start justify-between mb-4">
@@ -173,7 +207,18 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
                 placeholder="Share your experience with this business..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={4}
+                maxLength={500}
               />
+              <div className="flex justify-between items-center mt-1">
+                <p className="text-xs text-gray-500">
+                  Help others by sharing details about your experience
+                </p>
+                <span className={`text-xs ${
+                  newReview.comment.length > 450 ? 'text-red-500' : 'text-gray-400'
+                }`}>
+                  {newReview.comment.length}/500
+                </span>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-3">
@@ -272,7 +317,7 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
                     review.helpfulUsers?.includes(address || '') ? 'fill-current' : ''
                   }`} />
                   <span>
-                    {review.helpfulUsers?.includes(address || '') ? 'Helpful' : 'Helpful'} ({review.helpful})
+                    {review.helpfulUsers?.includes(address || '') ? 'Liked' : 'Helpful'} ({review.helpful})
                   </span>
                 </button>
                 {!isConnected && (

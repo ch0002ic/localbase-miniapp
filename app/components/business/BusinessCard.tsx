@@ -47,6 +47,11 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
     if (!todayHours) return 'Hours not available';
     if (todayHours.closed) return 'Closed today';
     
+    // Check if currently open
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5);
+    const isCurrentlyOpen = currentTime >= todayHours.open && currentTime <= todayHours.close;
+    
     // Format time from 24-hour to 12-hour format
     const formatTime = (time: string) => {
       const [hour, minute] = time.split(':');
@@ -64,7 +69,8 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
       return 'Open 24 hours';
     }
     
-    return `Open today ${openTime} - ${closeTime}`;
+    const status = isCurrentlyOpen ? '🟢 Open' : '🔴 Closed';
+    return `${status} today ${openTime} - ${closeTime}`;
   };
   
   const getReputationColor = (score: number) => {
@@ -136,12 +142,12 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
     if (context && composeCast) {
       // Share on Farcaster via MiniKit
       composeCast({
-        text: `Check out ${business.name} on LocalBase! 🏪\n\n${business.description}\n\n📍 ${business.address}\n⭐ ${(business.reputationScore / 20).toFixed(1)}/5 stars`,
+        text: `Check out ${business.name} on LocalBase! 🏪\n\n${business.description}\n\n📍 ${business.address}\n⭐ ${(business.averageRating || 0).toFixed(1)}/5 stars (${business.totalReviews || 0} reviews)`,
         embeds: [window.location.href]
       });
     } else {
       // Fallback to clipboard
-      const shareText = `Check out ${business.name} on LocalBase!\n\n${business.description}\n\nLocation: ${business.address}\nRating: ${(business.reputationScore / 20).toFixed(1)}/5 stars\n\n${window.location.href}`;
+      const shareText = `Check out ${business.name} on LocalBase!\n\n${business.description}\n\nLocation: ${business.address}\nRating: ${(business.averageRating || 0).toFixed(1)}/5 stars (${business.totalReviews || 0} reviews)\n\n${window.location.href}`;
       navigator.clipboard.writeText(shareText).then(() => {
         alert('Business info copied to clipboard!');
       });
@@ -258,11 +264,15 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
                 setPaymentAmount(e.target.value);
               }
             }}
-            className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm"
-            placeholder="Amount (ETH) - Max: 1.0"
+            className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Amount (ETH)"
             onClick={(e) => e.stopPropagation()}
             title="Enter payment amount in ETH (max 1.0 for testnet)"
           />
+          <div className="flex flex-col text-xs text-gray-500">
+            <span>Max: 1.0 ETH</span>
+            <span>~${(parseFloat(paymentAmount) * 4000).toFixed(2)} USD</span>
+          </div>
         </div>
         <div className="flex gap-2">
           <div className="flex-1" onClick={(e) => e.stopPropagation()}>
