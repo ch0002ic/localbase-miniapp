@@ -63,9 +63,17 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
   };
 
   const handleHelpfulVote = async (reviewId: string) => {
+    if (!isConnected || !address) {
+      alert('Please connect your wallet to vote');
+      return;
+    }
+    
     try {
-      await LocalBaseAPI.markReviewHelpful(reviewId);
+      const userLiked = await LocalBaseAPI.toggleReviewHelpful(reviewId, address);
       onReviewSubmitted(); // Refresh reviews
+      
+      // Optional: Show feedback to user
+      console.log(userLiked ? 'You liked this review' : 'You removed your like');
     } catch (error) {
       console.error('Error voting helpful:', error);
     }
@@ -251,11 +259,25 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
               <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                 <button
                   onClick={() => handleHelpfulVote(review.id)}
-                  className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 text-sm"
+                  disabled={!isConnected}
+                  className={`flex items-center space-x-1 text-sm transition-colors ${
+                    !isConnected 
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : review.helpfulUsers?.includes(address || '') 
+                        ? 'text-blue-600 hover:text-blue-700 font-medium' 
+                        : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  <ThumbsUp className="w-4 h-4" />
-                  <span>Helpful ({review.helpful})</span>
+                  <ThumbsUp className={`w-4 h-4 ${
+                    review.helpfulUsers?.includes(address || '') ? 'fill-current' : ''
+                  }`} />
+                  <span>
+                    {review.helpfulUsers?.includes(address || '') ? 'Helpful!' : 'Helpful'} ({review.helpful})
+                  </span>
                 </button>
+                {!isConnected && (
+                  <span className="text-xs text-gray-400">Connect wallet to vote</span>
+                )}
               </div>
             </div>
           ))

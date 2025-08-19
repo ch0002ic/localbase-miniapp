@@ -50,6 +50,7 @@ export interface Review {
   transactionHash?: string;
   verified: boolean;
   helpful: number; // Number of users who found this helpful
+  helpfulUsers: string[]; // Array of user addresses who marked this helpful
   photos?: string[]; // Review photos
 }
 

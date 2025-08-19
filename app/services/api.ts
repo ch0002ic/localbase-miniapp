@@ -117,21 +117,22 @@ export class LocalBaseAPI {
     userAddress: string;
   }): Promise<void> {
     try {
-      const reviews = await PersistentStorage.getStoredReviews();
-      const newReview: Review = {
-        id: (reviews.length + 1).toString(),
+      const review: Review = {
+        id: `review_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         businessId,
-        userId: reviewData.userAddress,
+        userId: `user_${reviewData.userAddress}`,
         userAddress: reviewData.userAddress,
+        userName: undefined,
         rating: reviewData.rating,
         comment: reviewData.comment,
         timestamp: Date.now(),
-        verified: true, // Could check if user made recent transaction
+        verified: false,
         helpful: 0,
+        helpfulUsers: [], // Initialize empty array for helpful users
         photos: reviewData.photos || []
       };
 
-      await PersistentStorage.addReview(newReview);
+      await PersistentStorage.addReview(review);
       
       // Update business average rating
       await this.updateBusinessRating(businessId);
@@ -141,6 +142,43 @@ export class LocalBaseAPI {
     }
   }
 
+  static async toggleReviewHelpful(reviewId: string, userAddress: string): Promise<boolean> {
+    try {
+      const reviews = await PersistentStorage.getStoredReviews();
+      const reviewIndex = reviews.findIndex(r => r.id === reviewId);
+      
+      if (reviewIndex !== -1) {
+        const review = reviews[reviewIndex];
+        
+        // Initialize helpfulUsers array if it doesn't exist (for backward compatibility)
+        if (!review.helpfulUsers) {
+          review.helpfulUsers = [];
+        }
+        
+        const userIndex = review.helpfulUsers.indexOf(userAddress);
+        
+        if (userIndex === -1) {
+          // User hasn't liked this review, add their like
+          review.helpfulUsers.push(userAddress);
+          review.helpful += 1;
+          await PersistentStorage.saveReviews(reviews);
+          return true; // User liked the review
+        } else {
+          // User has already liked this review, remove their like
+          review.helpfulUsers.splice(userIndex, 1);
+          review.helpful = Math.max(0, review.helpful - 1); // Ensure it doesn't go below 0
+          await PersistentStorage.saveReviews(reviews);
+          return false; // User unliked the review
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Error toggling review helpful:', error);
+      throw error;
+    }
+  }
+
+  // Keep the old method for backward compatibility
   static async markReviewHelpful(reviewId: string): Promise<void> {
     try {
       const reviews = await PersistentStorage.getStoredReviews();

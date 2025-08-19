@@ -75,7 +75,13 @@ export class PersistentStorage {
     if (typeof window === 'undefined') return [];
     try {
       const stored = localStorage.getItem(this.REVIEWS_KEY);
-      return stored ? JSON.parse(stored) : [];
+      const reviews = stored ? JSON.parse(stored) : [];
+      
+      // Migrate existing reviews to add missing helpfulUsers field
+      return reviews.map((review: Partial<Review>) => ({
+        ...review,
+        helpfulUsers: review.helpfulUsers ?? [], // Initialize empty array if missing
+      })) as Review[];
     } catch {
       return [];
     }
@@ -331,6 +337,7 @@ export class PersistentStorage {
         timestamp: Date.now() - 86400000, // 1 day ago
         verified: true,
         helpful: 8,
+        helpfulUsers: ['0xa1b2c3d4', '0xe5f6g7h8', '0xi9j0k1l2', '0xm3n4o5p6', '0xq7r8s9t0', '0xu1v2w3x4', '0xy5z6a7b8', '0xc9d0e1f2'],
         photos: []
       },
       {
@@ -344,6 +351,7 @@ export class PersistentStorage {
         timestamp: Date.now() - 172800000, // 2 days ago
         verified: true,
         helpful: 5,
+        helpfulUsers: ['0xa1b2c3d4', '0xe5f6g7h8', '0xi9j0k1l2', '0xm3n4o5p6', '0xq7r8s9t0'],
         photos: []
       },
       {
@@ -357,6 +365,7 @@ export class PersistentStorage {
         timestamp: Date.now() - 259200000, // 3 days ago
         verified: true,
         helpful: 12,
+        helpfulUsers: ['0xa1b2c3d4', '0xe5f6g7h8', '0xi9j0k1l2', '0xm3n4o5p6', '0xq7r8s9t0', '0xu1v2w3x4', '0xy5z6a7b8', '0xc9d0e1f2', '0xg3h4i5j6', '0xk7l8m9n0', '0xo1p2q3r4', '0xs5t6u7v8'],
         photos: []
       },
       {
@@ -370,6 +379,7 @@ export class PersistentStorage {
         timestamp: Date.now() - 345600000, // 4 days ago
         verified: true,
         helpful: 15,
+        helpfulUsers: ['0xa1b2c3d4', '0xe5f6g7h8', '0xi9j0k1l2', '0xm3n4o5p6', '0xq7r8s9t0', '0xu1v2w3x4', '0xy5z6a7b8', '0xc9d0e1f2', '0xg3h4i5j6', '0xk7l8m9n0', '0xo1p2q3r4', '0xs5t6u7v8', '0xw9x0y1z2', '0xa3b4c5d6', '0xe7f8g9h0'],
         photos: []
       },
       {
@@ -383,6 +393,7 @@ export class PersistentStorage {
         timestamp: Date.now() - 432000000, // 5 days ago
         verified: true,
         helpful: 7,
+        helpfulUsers: ['0xa1b2c3d4', '0xe5f6g7h8', '0xi9j0k1l2', '0xm3n4o5p6', '0xq7r8s9t0', '0xu1v2w3x4', '0xy5z6a7b8'],
         photos: []
       }
     ];
