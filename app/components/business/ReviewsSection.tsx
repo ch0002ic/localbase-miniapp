@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { Review } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
@@ -258,10 +259,12 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                     {review.userAvatar ? (
-                      <img 
+                      <Image 
                         src={review.userAvatar} 
                         alt={review.userName || 'User'}
                         className="w-full h-full rounded-full object-cover"
+                        width={40}
+                        height={40}
                       />
                     ) : (
                       <User className="w-5 h-5 text-gray-400" />
@@ -291,11 +294,13 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
               {review.photos && review.photos.length > 0 && (
                 <div className="flex space-x-2 mb-3">
                   {review.photos.map((photo, index) => (
-                    <img
+                    <Image
                       key={index}
                       src={photo}
                       alt={`Review photo ${index + 1}`}
                       className="w-16 h-16 object-cover rounded-lg"
+                      width={64}
+                      height={64}
                     />
                   ))}
                 </div>

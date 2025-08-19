@@ -42,6 +42,37 @@ export class LocalBaseAPI {
     }
   }
 
+  static async updateBusiness(updatedBusiness: Business): Promise<void> {
+    try {
+      const businesses = await PersistentStorage.getStoredBusinesses();
+      const businessIndex = businesses.findIndex(b => b.id === updatedBusiness.id);
+      
+      if (businessIndex === -1) {
+        throw new Error('Business not found');
+      }
+      
+      // Update the business while preserving readonly fields
+      businesses[businessIndex] = {
+        ...businesses[businessIndex],
+        ...updatedBusiness,
+        // Preserve these fields that shouldn't be edited
+        id: businesses[businessIndex].id,
+        owner: businesses[businessIndex].owner,
+        totalTransactions: businesses[businessIndex].totalTransactions,
+        reputationScore: businesses[businessIndex].reputationScore,
+        verified: businesses[businessIndex].verified,
+        averageRating: businesses[businessIndex].averageRating,
+        totalReviews: businesses[businessIndex].totalReviews,
+      };
+      
+      await PersistentStorage.saveBusinesses(businesses);
+      console.log(`Business ${updatedBusiness.id} updated successfully`);
+    } catch (error) {
+      console.error('Error updating business:', error);
+      throw error;
+    }
+  }
+
   static async deleteBusiness(businessId: string): Promise<void> {
     try {
       const businesses = await PersistentStorage.getStoredBusinesses();

@@ -31,7 +31,7 @@ export function NFTRewards() {
   const [usedRewards, setUsedRewards] = useState<{[tokenId: string]: number}>({});
   const [usingReward, setUsingReward] = useState<{[tokenId: string]: boolean}>({});
   
-  const loadUsedRewards = () => {
+  const loadUsedRewards = useCallback(() => {
     if (!address) return;
     
     const usedRewardsKey = `used_rewards_${address}`;
@@ -39,7 +39,7 @@ export function NFTRewards() {
     if (stored) {
       setUsedRewards(JSON.parse(stored));
     }
-  };
+  }, [address]);
 
   const fetchLoyaltyNFTs = useCallback(async () => {
     setLoading(true);
@@ -95,7 +95,7 @@ export function NFTRewards() {
     } finally {
       setLoading(false);
     }
-  }, [address, loadUsedRewards]);
+  }, [loadUsedRewards]);
 
   useEffect(() => {
     if (isConnected && address) {

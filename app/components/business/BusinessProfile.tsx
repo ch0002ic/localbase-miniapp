@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
+import Image from 'next/image';
 import { Business, Review, BusinessAnalytics } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
 import { ReviewsSection } from './ReviewsSection';
 import { BusinessAnalyticsDashboard } from './BusinessAnalyticsDashboard';
 import { PaymentTransaction } from './PaymentTransaction';
 import { WithdrawFunds } from './WithdrawFunds';
+import { EditBusinessModal } from './EditBusinessModal';
 import { 
   Star, 
   MapPin, 
@@ -23,7 +25,8 @@ import {
   Twitter,
   Facebook,
   ArrowLeft,
-  Settings
+  Settings,
+  Edit3
 } from 'lucide-react';
 
 interface BusinessProfileProps {
@@ -37,6 +40,7 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
   const [analytics, setAnalytics] = useState<BusinessAnalytics | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'analytics' | 'hours' | 'management'>('overview');
   const [loading, setLoading] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
   const { address } = useAccount();
 
   const loadBusinessData = useCallback(async () => {
@@ -145,12 +149,15 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
         )}
 
         {/* Cover Image */}
+        {/* Cover Image */}
         <div className="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg overflow-hidden mb-4">
           {business.coverUrl && (
-            <img 
+            <Image 
               src={business.coverUrl} 
               alt={`${business.name} cover`}
               className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           )}
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
@@ -159,10 +166,12 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
           <div className="absolute bottom-4 left-4 flex items-end space-x-4">
             <div className="w-20 h-20 bg-white rounded-full p-1">
               {business.avatarUrl ? (
-                <img 
+                <Image 
                   src={business.avatarUrl} 
                   alt={business.name}
                   className="w-full h-full rounded-full object-cover"
+                  width={80}
+                  height={80}
                 />
               ) : (
                 <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
@@ -182,6 +191,17 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
               </div>
               <p className="text-sm opacity-90">{business.category}</p>
             </div>
+            
+            {/* Edit Button for Owner */}
+            {isOwner && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="absolute top-4 right-4 px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span className="text-sm">Edit</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -266,10 +286,12 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
                       key={index}
                       className="aspect-square bg-gray-200 rounded-lg overflow-hidden"
                     >
-                      <img 
+                      <Image 
                         src={photo} 
                         alt={`${business.name} photo ${index + 1}`}
                         className="w-full h-full object-cover"
+                        width={200}
+                        height={200}
                       />
                     </div>
                   ))}
@@ -422,6 +444,21 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
           </div>
         )}
       </div>
+      
+      {/* Edit Business Modal */}
+      {showEditModal && (
+        <EditBusinessModal
+          business={business}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={() => {
+            console.log('Business updated successfully');
+            setShowEditModal(false);
+            // You might want to refresh the business data here
+            // or update the parent component's state
+          }}
+        />
+      )}
     </div>
   );
 }
