@@ -22,7 +22,7 @@ import {
   TrendingUp,
   MessageCircle,
   Instagram,
-  Twitter,
+  X,
   Facebook,
   ArrowLeft,
   Settings,
@@ -166,13 +166,19 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
           <div className="absolute bottom-4 left-4 flex items-end space-x-4">
             <div className="w-20 h-20 bg-white rounded-full p-1">
               {business.avatarUrl ? (
-                <Image 
-                  src={business.avatarUrl} 
-                  alt={business.name}
-                  className="w-full h-full rounded-full object-cover"
-                  width={80}
-                  height={80}
-                />
+                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                  {business.avatarUrl.startsWith('http') ? (
+                    <Image 
+                      src={business.avatarUrl} 
+                      alt={business.name}
+                      className="w-full h-full rounded-full object-cover"
+                      width={80}
+                      height={80}
+                    />
+                  ) : (
+                    <span className="text-2xl">{business.avatarUrl}</span>
+                  )}
+                </div>
               ) : (
                 <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
                   <span className="text-gray-600 text-xl font-bold">
@@ -349,8 +355,8 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
                     </a>
                   )}
                   {business.socialLinks.twitter && (
-                    <a href={business.socialLinks.twitter} target="_blank" rel="noopener noreferrer">
-                      <Twitter className="w-6 h-6 text-blue-400 hover:text-blue-500" />
+                    <a href={business.socialLinks.twitter} target="_blank" rel="noopener noreferrer" title="Follow us on X (formerly Twitter)">
+                      <X className="w-6 h-6 text-gray-900 hover:text-gray-700" />
                     </a>
                   )}
                   {business.socialLinks.facebook && (

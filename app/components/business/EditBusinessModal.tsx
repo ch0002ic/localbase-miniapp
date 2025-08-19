@@ -345,7 +345,7 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
                       value={avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="https://example.com/avatar.jpg or emoji like ☕"
+                      placeholder="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400 or emoji ☕"
                       disabled={loading}
                     />
                     {avatarUrl && (
@@ -370,7 +370,7 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
                       value={coverUrl}
                       onChange={(e) => setCoverUrl(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="https://example.com/cover.jpg"
+                      placeholder="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800"
                       disabled={loading}
                     />
                     {coverUrl && (

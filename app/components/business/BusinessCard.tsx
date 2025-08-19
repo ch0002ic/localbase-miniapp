@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { useMiniKit, useComposeCast, useOpenUrl } from '@coinbase/onchainkit/minikit';
 import { Business } from '../../types/localbase';
@@ -180,8 +181,22 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
-              {business.avatarUrl || '🏪'}
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+              {business.avatarUrl ? (
+                business.avatarUrl.startsWith('http') ? (
+                  <Image 
+                    src={business.avatarUrl} 
+                    alt={business.name}
+                    className="w-full h-full rounded-lg object-cover"
+                    width={48}
+                    height={48}
+                  />
+                ) : (
+                  <span className="text-2xl">{business.avatarUrl}</span>
+                )
+              ) : (
+                <span className="text-2xl">🏪</span>
+              )}
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
