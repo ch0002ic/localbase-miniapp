@@ -177,31 +177,46 @@ export class LocalBaseAPI {
   // Analytics methods
   static async getBusinessAnalytics(businessId: string): Promise<BusinessAnalytics | null> {
     try {
-      // This would typically come from a real analytics service
-      // For demo purposes, we'll generate mock analytics based on stored data
+      // Get both local and onchain business data
       const business = await this.getBusinessById(businessId);
       const reviews = await this.getBusinessReviews(businessId);
       
       if (!business) return null;
 
+      // Try to get real onchain data
+      let onchainData = null;
+      try {
+        const { SmartContractService } = await import('./smartContract');
+        if (SmartContractService.isEnabled()) {
+          onchainData = await SmartContractService.getBusinessInfo(businessId);
+        }
+      } catch (error) {
+        console.warn('Could not fetch onchain business data:', error);
+      }
+
+      // Use onchain data if available, otherwise fall back to mock data
+      const realTotalReceived = onchainData ? parseFloat(onchainData.totalReceived) : 0;
+      const realTransactionCount = onchainData ? onchainData.transactionCount : business.totalTransactions;
+      const averageTransactionValue = realTransactionCount > 0 ? (realTotalReceived / realTransactionCount).toFixed(4) : '0.001';
+
       const analytics: BusinessAnalytics = {
         businessId,
         period: 'month',
-        totalRevenue: (business.totalTransactions * 25.50).toString(), // Mock calculation
-        totalTransactions: business.totalTransactions,
-        averageTransactionValue: '25.50',
-        uniqueCustomers: Math.max(1, Math.floor(business.totalTransactions * 0.8)),
-        returningCustomers: Math.max(0, Math.floor(business.totalTransactions * 0.3)),
+        totalRevenue: onchainData ? (realTotalReceived * 3100).toFixed(2) : (business.totalTransactions * 25.50).toString(), // Convert ETH to USD (~$3100)
+        totalTransactions: realTransactionCount,
+        averageTransactionValue: onchainData ? averageTransactionValue : '0.001',
+        uniqueCustomers: Math.max(1, Math.floor(realTransactionCount * 0.8)),
+        returningCustomers: Math.max(0, Math.floor(realTransactionCount * 0.3)),
         peakHours: [
-          { hour: 9, transactions: 15 },
-          { hour: 12, transactions: 32 },
-          { hour: 15, transactions: 28 },
-          { hour: 18, transactions: 45 },
-          { hour: 21, transactions: 22 }
+          { hour: 9, transactions: Math.floor(realTransactionCount * 0.15) },
+          { hour: 12, transactions: Math.floor(realTransactionCount * 0.25) },
+          { hour: 15, transactions: Math.floor(realTransactionCount * 0.20) },
+          { hour: 18, transactions: Math.floor(realTransactionCount * 0.30) },
+          { hour: 21, transactions: Math.floor(realTransactionCount * 0.10) }
         ],
         topPaymentMethods: [
-          { method: 'ETH', count: Math.floor(business.totalTransactions * 0.6) },
-          { method: 'USDC', count: Math.floor(business.totalTransactions * 0.4) }
+          { method: 'ETH', count: Math.floor(realTransactionCount * 1.0) }, // All payments are ETH
+          { method: 'Other', count: 0 }
         ],
         reviewStats: {
           averageRating: business.averageRating || 0,
@@ -212,10 +227,10 @@ export class LocalBaseAPI {
           }, {} as { [key: number]: number })
         },
         geographicData: [
-          { location: 'Downtown', customers: Math.floor(business.totalTransactions * 0.4) },
-          { location: 'Midtown', customers: Math.floor(business.totalTransactions * 0.3) },
-          { location: 'Uptown', customers: Math.floor(business.totalTransactions * 0.2) },
-          { location: 'Suburbs', customers: Math.floor(business.totalTransactions * 0.1) }
+          { location: 'Downtown', customers: Math.floor(realTransactionCount * 0.4) },
+          { location: 'Midtown', customers: Math.floor(realTransactionCount * 0.3) },
+          { location: 'Uptown', customers: Math.floor(realTransactionCount * 0.2) },
+          { location: 'Suburbs', customers: Math.floor(realTransactionCount * 0.1) }
         ]
       };
 

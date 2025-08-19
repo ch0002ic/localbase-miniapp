@@ -7,6 +7,7 @@ import { LocalBaseAPI } from '../../services/api';
 import { ReviewsSection } from './ReviewsSection';
 import { BusinessAnalyticsDashboard } from './BusinessAnalyticsDashboard';
 import { PaymentTransaction } from './PaymentTransaction';
+import { WithdrawFunds } from './WithdrawFunds';
 import { 
   Star, 
   MapPin, 
@@ -21,7 +22,8 @@ import {
   Instagram,
   Twitter,
   Facebook,
-  ArrowLeft
+  ArrowLeft,
+  Settings
 } from 'lucide-react';
 
 interface BusinessProfileProps {
@@ -33,7 +35,7 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
   const [business, setBusiness] = useState<Business | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [analytics, setAnalytics] = useState<BusinessAnalytics | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'analytics' | 'hours'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'analytics' | 'hours' | 'management'>('overview');
   const [loading, setLoading] = useState(true);
   const { address } = useAccount();
 
@@ -222,12 +224,15 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
           {[
             { id: 'overview', label: 'Overview', icon: MapPin },
             { id: 'reviews', label: 'Reviews', icon: MessageCircle },
-            ...(isOwner ? [{ id: 'analytics', label: 'Analytics', icon: TrendingUp }] : []),
+            ...(isOwner ? [
+              { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+              { id: 'management', label: 'Management', icon: Settings }
+            ] : []),
             { id: 'hours', label: 'Hours', icon: Clock }
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id as 'overview' | 'reviews' | 'analytics' | 'hours')}
+              onClick={() => setActiveTab(id as 'overview' | 'reviews' | 'analytics' | 'hours' | 'management')}
               className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === id
                   ? 'border-blue-500 text-blue-600'
@@ -360,6 +365,47 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
 
         {activeTab === 'analytics' && isOwner && analytics && (
           <BusinessAnalyticsDashboard analytics={analytics} />
+        )}
+
+        {activeTab === 'management' && isOwner && business && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold mb-4">Business Management</h3>
+            
+            {/* Fund Withdrawal Section */}
+            <WithdrawFunds 
+              business={business} 
+              onSuccess={() => loadBusinessData()} 
+            />
+            
+            {/* Business Status Section */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h4 className="text-md font-semibold mb-4 flex items-center">
+                <Shield className="w-5 h-5 mr-2 text-blue-600" />
+                Business Status
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900">Business Active</div>
+                    <div className="text-sm text-gray-500">
+                      Controls whether your business can receive payments
+                    </div>
+                  </div>
+                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    business.isActive 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {business.isActive ? 'Active' : 'Inactive'}
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-500">
+                  💡 Business status can be toggled through the smart contract interface
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === 'hours' && (
