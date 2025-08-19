@@ -185,30 +185,30 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
               )}
             </div>
             
-            <div className="text-white">
-              <div className="flex items-center space-x-2">
-                <h1 className="text-2xl font-bold">{business.name}</h1>
-                {business.verified && (
-                  <Shield className="w-6 h-6 text-blue-400" />
-                )}
-              </div>
-              <p className="text-sm opacity-90">{business.category}</p>
+          <div className="text-white">
+            <div className="flex items-center space-x-2">
+              <h1 className="text-2xl font-bold">{business.name}</h1>
+              {business.verified && (
+                <Shield className="w-6 h-6 text-blue-400" />
+              )}
             </div>
-            
-            {/* Edit Button for Owner */}
-            {isOwner && (
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="absolute top-4 right-4 px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors flex items-center space-x-2"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span className="text-sm">Edit</span>
-              </button>
-            )}
+            <p className="text-sm opacity-90">{business.category}</p>
           </div>
         </div>
+      </div>
 
-        {/* Quick Stats */}
+      {/* Edit Button for Owner - Positioned above business info */}
+      {isOwner && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 shadow-sm"
+          >
+            <Edit3 className="w-4 h-4" />
+            <span>Edit Business</span>
+          </button>
+        </div>
+      )}        {/* Quick Stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="text-center">
             <div className="flex items-center justify-center mb-1">
