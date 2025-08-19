@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAccount } from 'wagmi';
 import { BusinessCard } from './BusinessCard';
 import { BusinessProfile } from './BusinessProfile';
 import { RegisterBusinessModal } from './RegisterBusinessModal';
+import { MyBusinesses } from './MyBusinesses';
 import { Business, BusinessCategory } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
 import { MockModeBanner } from '../MockModeBanner';
-import { MapPin, Search, Plus } from 'lucide-react';
+import { MapPin, Search, Plus, Store, User } from 'lucide-react';
 
 export function BusinessDirectory() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -16,6 +18,8 @@ export function BusinessDirectory() {
   const [loading, setLoading] = useState(true);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'discover' | 'my-businesses'>('discover');
+  const { isConnected } = useAccount();
   
   const categories: Array<{ id: BusinessCategory | 'all'; label: string; icon: string }> = [
     { id: 'all', label: 'All', icon: '🏢' },
@@ -104,7 +108,7 @@ export function BusinessDirectory() {
       
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-gray-900">
             <MapPin className="inline-block w-6 h-6 mr-2 text-blue-600" />
             Discover Local Businesses
@@ -117,80 +121,124 @@ export function BusinessDirectory() {
             Register Business
           </button>
         </div>
-        <p className="text-gray-600">Find crypto-friendly businesses in your area</p>
-      </div>
-      
-      {/* Search Bar */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="text"
-          placeholder="Search businesses..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <button
-          onClick={handleSearch}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-800"
-        >
-          <Search className="w-5 h-5" />
-        </button>
-      </div>
-      
-      {/* Category Filter */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            onClick={() => setSelectedCategory(category.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
-              selectedCategory === category.id
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <span>{category.icon}</span>
-            <span className="font-medium">{category.label}</span>
-          </button>
-        ))}
-      </div>
-      
-      {/* Results */}
-      <div className="mb-4">
-        <p className="text-sm text-gray-600">
-          {filteredBusinesses.length} business{filteredBusinesses.length !== 1 ? 'es' : ''} found
+
+        {/* Tab Navigation */}
+        {isConnected && (
+          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1 mb-4">
+            <button
+              onClick={() => setActiveTab('discover')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'discover'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Store className="w-4 h-4 mr-2 inline" />
+              Discover
+            </button>
+            <button
+              onClick={() => setActiveTab('my-businesses')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'my-businesses'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <User className="w-4 h-4 mr-2 inline" />
+              My Businesses
+            </button>
+          </div>
+        )}
+
+        <p className="text-gray-600">
+          {activeTab === 'discover' 
+            ? 'Find crypto-friendly businesses in your area'
+            : 'Manage your registered businesses'
+          }
         </p>
       </div>
       
-      {/* Business Grid */}
-      {filteredBusinesses.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No businesses found</h3>
-          <p className="text-gray-600 mb-4">Try adjusting your search or category filter</p>
-          <button
-            onClick={() => {
-              setSearchTerm('');
-              setSelectedCategory('all');
-            }}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Clear filters
-          </button>
-        </div>
+      {/* Tab Content */}
+      {activeTab === 'my-businesses' ? (
+        <MyBusinesses
+          onCreateBusiness={() => setShowRegisterModal(true)}
+          onViewBusiness={(businessId) => setSelectedBusinessId(businessId)}
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBusinesses.map((business) => (
-            <BusinessCard 
-              key={business.id} 
-              business={business} 
-              onBusinessUpdate={fetchBusinesses}
-              onViewProfile={handleViewProfile}
+        <>
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search businesses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-          ))}
-        </div>
+            <button
+              onClick={handleSearch}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-800"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Category Filter */}
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                  selectedCategory === category.id
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>{category.icon}</span>
+                <span className="font-medium">{category.label}</span>
+              </button>
+            ))}
+          </div>
+          
+          {/* Results */}
+          <div className="mb-4">
+            <p className="text-sm text-gray-600">
+              {filteredBusinesses.length} business{filteredBusinesses.length !== 1 ? 'es' : ''} found
+            </p>
+          </div>
+          
+          {/* Business Grid */}
+          {filteredBusinesses.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No businesses found</h3>
+              <p className="text-gray-600 mb-4">Try adjusting your search or category filter</p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedCategory('all');
+                }}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredBusinesses.map((business) => (
+                <BusinessCard 
+                  key={business.id} 
+                  business={business} 
+                  onBusinessUpdate={fetchBusinesses}
+                  onViewProfile={handleViewProfile}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
       
       {/* Register Business Modal */}

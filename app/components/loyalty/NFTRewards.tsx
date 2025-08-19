@@ -95,7 +95,7 @@ export function NFTRewards() {
     } finally {
       setLoading(false);
     }
-  }, [address]);
+  }, [address, loadUsedRewards]);
 
   useEffect(() => {
     if (isConnected && address) {

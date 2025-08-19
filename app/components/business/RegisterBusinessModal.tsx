@@ -27,7 +27,135 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
   const [closeTime, setCloseTime] = useState('18:00');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const { address, isConnected } = useAccount();
+
+  // Auto-generate business ID when name changes
+  const generateBusinessId = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+      + '-' + Math.random().toString(36).substr(2, 4); // Add random suffix
+  };
+
+  // Auto-fill business details based on category
+  const categoryDefaults = {
+    food: {
+      description: 'Delicious food and great service in a welcoming atmosphere.',
+      openTime: '08:00',
+      closeTime: '22:00',
+      priceRange: '$$'
+    },
+    shopping: {
+      description: 'Quality products with excellent customer service.',
+      openTime: '10:00',
+      closeTime: '20:00',
+      priceRange: '$$$'
+    },
+    services: {
+      description: 'Professional services tailored to your needs.',
+      openTime: '09:00',
+      closeTime: '18:00',
+      priceRange: '$$'
+    },
+    health: {
+      description: 'Professional healthcare services in a comfortable environment.',
+      openTime: '08:00',
+      closeTime: '17:00',
+      priceRange: '$$$'
+    },
+    beauty: {
+      description: 'Premium beauty services to help you look and feel your best.',
+      openTime: '09:00',
+      closeTime: '19:00',
+      priceRange: '$$'
+    },
+    fun: {
+      description: 'Entertainment and activities for an unforgettable experience.',
+      openTime: '10:00',
+      closeTime: '23:00',
+      priceRange: '$$'
+    }
+  };
+
+  // Validation functions
+  const validateField = (field: string, value: string) => {
+    const errors: {[key: string]: string} = {};
+
+    switch (field) {
+      case 'businessName':
+        if (!value.trim()) errors.businessName = 'Business name is required';
+        else if (value.length < 3) errors.businessName = 'Business name must be at least 3 characters';
+        else if (value.length > 50) errors.businessName = 'Business name must be less than 50 characters';
+        break;
+
+      case 'businessAddress':
+        if (!value.trim()) errors.businessAddress = 'Business address is required';
+        else if (value.length < 10) errors.businessAddress = 'Please enter a complete address';
+        break;
+
+      case 'email':
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          errors.email = 'Please enter a valid email address';
+        }
+        break;
+
+      case 'website':
+        if (value && !/^https?:\/\/.+\..+/.test(value)) {
+          errors.website = 'Please enter a valid website URL (e.g., https://example.com)';
+        }
+        break;
+
+      case 'phoneNumber':
+        if (value && !/^[\+]?[0-9\s\-\(\)]{8,}$/.test(value)) {
+          errors.phoneNumber = 'Please enter a valid phone number';
+        }
+        break;
+    }
+
+    return errors;
+  };
+
+  // Handle category change with auto-fill
+  const handleCategoryChange = (category: BusinessCategory) => {
+    setBusinessCategory(category);
+    
+    // Auto-fill default values for the category if fields are empty
+    const defaults = categoryDefaults[category];
+    if (!businessDescription.trim()) {
+      setBusinessDescription(defaults.description);
+    }
+    if (openTime === '09:00') { // Only change if it's the default
+      setOpenTime(defaults.openTime);
+    }
+    if (closeTime === '18:00') { // Only change if it's the default
+      setCloseTime(defaults.closeTime);
+    }
+    if (priceRange === '$$') { // Only change if it's the default
+      setPriceRange(defaults.priceRange);
+    }
+  };
+
+  // Handle business name change with auto-generated ID
+  const handleBusinessNameChange = (name: string) => {
+    setBusinessName(name);
+    
+    // Auto-generate business ID
+    if (name.trim().length >= 3) {
+      const generatedId = generateBusinessId(name);
+      setBusinessId(generatedId);
+    }
+
+    // Validate
+    const errors = validateField('businessName', name);
+    setValidationErrors(prev => ({
+      ...prev,
+      businessName: errors.businessName || ''
+    }));
+  };
 
   const categories: Array<{ id: BusinessCategory; label: string; icon: string }> = [
     { id: 'food', label: 'Food', icon: '🍽️' },
@@ -46,8 +174,24 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
       return;
     }
 
+    // Comprehensive validation
+    const allErrors = {
+      ...validateField('businessName', businessName),
+      ...validateField('businessAddress', businessAddress),
+      ...validateField('email', email),
+      ...validateField('website', website),
+      ...validateField('phoneNumber', phoneNumber),
+    };
+
+    // Check required fields
     if (!businessId.trim() || !businessName.trim() || !businessDescription.trim() || !businessAddress.trim()) {
-      alert('Please fill in all required fields');
+      allErrors.general = 'Please fill in all required fields (marked with *)';
+    }
+
+    setValidationErrors(allErrors);
+
+    // If there are any errors, don't submit
+    if (Object.values(allErrors).some(error => error)) {
       return;
     }
 
@@ -174,53 +318,61 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                   type="text"
                   value={businessId}
                   onChange={(e) => setBusinessId(e.target.value)}
-                  placeholder="e.g., cafe-ntu-001"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Auto-generated from business name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                   disabled={loading}
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Unique identifier for your business (lowercase, no spaces)
+                  Unique identifier (auto-generated, but you can customize)
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Name
+                  Business Name *
                 </label>
                 <input
                   type="text"
                   value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
+                  onChange={(e) => handleBusinessNameChange(e.target.value)}
                   placeholder="e.g., LocalCafe NTU"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.businessName ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   disabled={loading}
                   required
                 />
+                {validationErrors.businessName && (
+                  <p className="text-xs text-red-600 mt-1">{validationErrors.businessName}</p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
+                  Description *
                 </label>
                 <textarea
                   value={businessDescription}
                   onChange={(e) => setBusinessDescription(e.target.value)}
-                  placeholder="Describe your business..."
+                  placeholder="Auto-filled based on category, but feel free to customize..."
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   disabled={loading}
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Description is auto-suggested based on your category
+                </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  Category *
                 </label>
                 <select
                   value={businessCategory}
-                  onChange={(e) => setBusinessCategory(e.target.value as BusinessCategory)}
+                  onChange={(e) => handleCategoryChange(e.target.value as BusinessCategory)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={loading}
                   required
@@ -231,6 +383,9 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Changing category will suggest default values for hours and pricing
+                </p>
               </div>
 
               <div>
@@ -240,12 +395,24 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                 <input
                   type="text"
                   value={businessAddress}
-                  onChange={(e) => setBusinessAddress(e.target.value)}
+                  onChange={(e) => {
+                    setBusinessAddress(e.target.value);
+                    const errors = validateField('businessAddress', e.target.value);
+                    setValidationErrors(prev => ({
+                      ...prev,
+                      businessAddress: errors.businessAddress || ''
+                    }));
+                  }}
                   placeholder="e.g., 50 Nanyang Ave, Singapore"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.businessAddress ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   disabled={loading}
                   required
                 />
+                {validationErrors.businessAddress && (
+                  <p className="text-xs text-red-600 mt-1">{validationErrors.businessAddress}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -256,11 +423,23 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                   <input
                     type="tel"
                     value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    onChange={(e) => {
+                      setPhoneNumber(e.target.value);
+                      const errors = validateField('phoneNumber', e.target.value);
+                      setValidationErrors(prev => ({
+                        ...prev,
+                        phoneNumber: errors.phoneNumber || ''
+                      }));
+                    }}
                     placeholder="+65 6XXX XXXX"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      validationErrors.phoneNumber ? 'border-red-300' : 'border-gray-300'
+                    }`}
                     disabled={loading}
                   />
+                  {validationErrors.phoneNumber && (
+                    <p className="text-xs text-red-600 mt-1">{validationErrors.phoneNumber}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -272,10 +451,10 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={loading}
                   >
-                    <option value="$">$ - Budget</option>
-                    <option value="$$">$$ - Moderate</option>
-                    <option value="$$$">$$$ - Expensive</option>
-                    <option value="$$$$">$$$$ - Very Expensive</option>
+                    <option value="$">$ - Budget (Under $15)</option>
+                    <option value="$$">$$ - Moderate ($15-30)</option>
+                    <option value="$$$">$$$ - Expensive ($30-50)</option>
+                    <option value="$$$$">$$$$ - Very Expensive ($50+)</option>
                   </select>
                 </div>
               </div>
@@ -287,11 +466,23 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    const errors = validateField('email', e.target.value);
+                    setValidationErrors(prev => ({
+                      ...prev,
+                      email: errors.email || ''
+                    }));
+                  }}
                   placeholder="hello@yourbusiness.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.email ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   disabled={loading}
                 />
+                {validationErrors.email && (
+                  <p className="text-xs text-red-600 mt-1">{validationErrors.email}</p>
+                )}
               </div>
 
               <div>
@@ -301,11 +492,23 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                 <input
                   type="url"
                   value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
+                  onChange={(e) => {
+                    setWebsite(e.target.value);
+                    const errors = validateField('website', e.target.value);
+                    setValidationErrors(prev => ({
+                      ...prev,
+                      website: errors.website || ''
+                    }));
+                  }}
                   placeholder="https://yourbusiness.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.website ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   disabled={loading}
                 />
+                {validationErrors.website && (
+                  <p className="text-xs text-red-600 mt-1">{validationErrors.website}</p>
+                )}
               </div>
 
               <div>
@@ -314,7 +517,7 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Open Time</label>
+                    <label className="block text-xs text-gray-500 mb-1">Opening Time</label>
                     <input
                       type="time"
                       value={openTime}
@@ -324,7 +527,7 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Close Time</label>
+                    <label className="block text-xs text-gray-500 mb-1">Closing Time</label>
                     <input
                       type="time"
                       value={closeTime}
@@ -335,7 +538,7 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Same hours will be applied to all days
+                  Hours are auto-suggested based on your business category and will apply to all days
                 </p>
               </div>
 
@@ -344,6 +547,12 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                   <p className="text-sm text-orange-700">
                     Please connect your wallet to register a business.
                   </p>
+                </div>
+              )}
+
+              {validationErrors.general && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-700">{validationErrors.general}</p>
                 </div>
               )}
             </div>

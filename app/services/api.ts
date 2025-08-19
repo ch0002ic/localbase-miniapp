@@ -30,6 +30,24 @@ export class LocalBaseAPI {
     }
   }
 
+  static async deleteBusiness(businessId: string): Promise<void> {
+    try {
+      const businesses = await PersistentStorage.getStoredBusinesses();
+      const filteredBusinesses = businesses.filter(b => b.id !== businessId);
+      await PersistentStorage.saveBusinesses(filteredBusinesses);
+      
+      // Also remove related reviews
+      const reviews = await PersistentStorage.getStoredReviews();
+      const filteredReviews = reviews.filter(r => r.businessId !== businessId);
+      await PersistentStorage.saveReviews(filteredReviews);
+      
+      console.log(`Business ${businessId} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting business:', error);
+      throw error;
+    }
+  }
+
   static async getBusinessById(id: string): Promise<Business | null> {
     const businesses = await this.getBusinesses();
     return businesses.find(b => b.id === id) || null;
