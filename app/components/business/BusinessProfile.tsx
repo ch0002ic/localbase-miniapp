@@ -21,9 +21,6 @@ import {
   Shield,
   TrendingUp,
   MessageCircle,
-  Instagram,
-  X,
-  Facebook,
   ArrowLeft,
   Settings,
   Edit3
@@ -350,18 +347,47 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
                 <h3 className="text-lg font-semibold mb-4">Follow Us</h3>
                 <div className="flex space-x-4">
                   {business.socialLinks.instagram && (
-                    <a href={business.socialLinks.instagram} target="_blank" rel="noopener noreferrer">
-                      <Instagram className="w-6 h-6 text-pink-500 hover:text-pink-600" />
+                    <a 
+                      href={business.socialLinks.instagram} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      title="Follow us on Instagram"
+                      className="text-pink-500 hover:text-pink-600 transition-colors"
+                    >
+                      <i className="bi bi-instagram text-2xl"></i>
                     </a>
                   )}
                   {business.socialLinks.twitter && (
-                    <a href={business.socialLinks.twitter} target="_blank" rel="noopener noreferrer" title="Follow us on X (formerly Twitter)">
-                      <X className="w-6 h-6 text-gray-900 hover:text-gray-700" />
+                    <a 
+                      href={business.socialLinks.twitter} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      title="Follow us on X (formerly Twitter)"
+                      className="text-gray-900 hover:text-gray-700 transition-colors"
+                    >
+                      <i className="bi bi-twitter-x text-2xl"></i>
                     </a>
                   )}
                   {business.socialLinks.facebook && (
-                    <a href={business.socialLinks.facebook} target="_blank" rel="noopener noreferrer">
-                      <Facebook className="w-6 h-6 text-blue-600 hover:text-blue-700" />
+                    <a 
+                      href={business.socialLinks.facebook} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      title="Follow us on Facebook"
+                      className="text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      <i className="bi bi-facebook text-2xl"></i>
+                    </a>
+                  )}
+                  {business.socialLinks.linkedin && (
+                    <a 
+                      href={business.socialLinks.linkedin} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      title="Connect with us on LinkedIn"
+                      className="text-blue-700 hover:text-blue-800 transition-colors"
+                    >
+                      <i className="bi bi-linkedin text-2xl"></i>
                     </a>
                   )}
                 </div>

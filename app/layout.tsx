@@ -15,6 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link 
+          rel="stylesheet" 
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+        />
+      </head>
       <body className="bg-background dark">
         <Providers>{children}</Providers>
       </body>

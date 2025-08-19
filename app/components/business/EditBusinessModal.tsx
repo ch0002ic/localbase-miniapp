@@ -45,7 +45,8 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
   const [socialLinks, setSocialLinks] = useState({
     instagram: '',
     twitter: '',
-    facebook: ''
+    facebook: '',
+    linkedin: ''
   });
 
   const { isConnected, address } = useAccount();
@@ -76,7 +77,8 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
       const defaultSocialLinks = {
         instagram: '',
         twitter: '',
-        facebook: ''
+        facebook: '',
+        linkedin: ''
       };
       setSocialLinks(business.socialLinks ? { ...defaultSocialLinks, ...business.socialLinks } : defaultSocialLinks);
       setError(null);
@@ -405,14 +407,14 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Twitter
+                      X (Twitter)
                     </label>
                     <input
                       type="url"
                       value={socialLinks.twitter}
                       onChange={(e) => setSocialLinks(prev => ({ ...prev, twitter: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="https://twitter.com/yourbusiness"
+                      placeholder="https://x.com/yourbusiness"
                       disabled={loading}
                     />
                   </div>
@@ -427,6 +429,20 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
                       onChange={(e) => setSocialLinks(prev => ({ ...prev, facebook: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="https://facebook.com/yourbusiness"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      LinkedIn
+                    </label>
+                    <input
+                      type="url"
+                      value={socialLinks.linkedin || ''}
+                      onChange={(e) => setSocialLinks(prev => ({ ...prev, linkedin: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://linkedin.com/company/yourbusiness"
                       disabled={loading}
                     />
                   </div>

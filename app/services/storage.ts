@@ -217,6 +217,10 @@ export class PersistentStorage {
         phoneNumber: '+65 6XXX YYYY',
         email: 'support@techmart.sg',
         priceRange: '$$$',
+        socialLinks: {
+          instagram: 'https://instagram.com/techmart_base',
+          facebook: 'https://facebook.com/techmartbase'
+        },
         hours: {
           monday: { open: '10:00', close: '20:00' },
           tuesday: { open: '10:00', close: '20:00' },
@@ -311,6 +315,11 @@ export class PersistentStorage {
         email: 'hello@localbase.sg',
         website: 'https://localbase.vercel.app',
         priceRange: '$',
+        socialLinks: {
+          twitter: 'https://twitter.com/localbase',
+          linkedin: 'https://linkedin.com/company/localbase',
+          instagram: 'https://instagram.com/localbase'
+        },
         hours: {
           monday: { open: '00:00', close: '23:59' },
           tuesday: { open: '00:00', close: '23:59' },

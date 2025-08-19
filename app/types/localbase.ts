@@ -34,6 +34,7 @@ export interface Business {
     instagram?: string;
     twitter?: string;
     facebook?: string;
+    linkedin?: string;
   };
 }
 
