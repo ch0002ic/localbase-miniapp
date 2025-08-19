@@ -17,6 +17,7 @@ interface EditBusinessModalProps {
 export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: EditBusinessModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   
   // Form fields
   const [businessName, setBusinessName] = useState('');
@@ -94,12 +95,63 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
     { id: 'beauty', label: 'Beauty', icon: '💄' },
   ];
 
+  const validateField = (fieldName: string, value: string) => {
+    const errors: {[key: string]: string} = {};
+    
+    switch (fieldName) {
+      case 'businessAddress':
+        if (!value.trim()) {
+          errors.businessAddress = 'Business address is required';
+        } else if (value.length < 10) {
+          errors.businessAddress = 'Please enter a complete address';
+        } else {
+          // Check for basic address components (numbers, street indicators, common address patterns)
+          const addressPattern = /^[0-9]+.*[a-zA-Z]+.*(street|st|road|rd|avenue|ave|blvd|boulevard|lane|ln|drive|dr|place|pl|way|court|ct|circle|cir)/i;
+          const hasNumbers = /\d/.test(value);
+          const hasLetters = /[a-zA-Z]/.test(value);
+          
+          if (!hasNumbers || !hasLetters) {
+            errors.businessAddress = 'Please enter a valid street address (e.g., 123 Main Street)';
+          } else if (!addressPattern.test(value) && value.length < 20) {
+            errors.businessAddress = 'Please enter a complete street address with street name';
+          }
+        }
+        break;
+        
+      case 'phoneNumber':
+        if (value) {
+          // Improved phone number validation for international format
+          // Accepts formats like: +65 12345678, +886 123456789, +1 2345678901
+          const phoneRegex = /^\+\d{1,4}\s\d{8,11}$/;
+          if (!phoneRegex.test(value)) {
+            errors.phoneNumber = 'Please enter a valid international phone number (e.g., +65 12345678)';
+          }
+        }
+        break;
+    }
+    
+    return errors;
+  };
+
   const validateForm = () => {
     if (!businessName.trim()) return 'Business name is required';
     if (!businessDescription.trim()) return 'Business description is required';
     if (!businessAddress.trim()) return 'Business address is required';
     if (email && !email.includes('@')) return 'Please enter a valid email address';
     if (website && !website.startsWith('http')) return 'Website must start with http:// or https://';
+    
+    // Check address validation
+    if (businessAddress) {
+      const addressErrors = validateField('businessAddress', businessAddress);
+      if (addressErrors.businessAddress) return addressErrors.businessAddress;
+    }
+    
+    // Check phone number validation
+    if (phoneNumber) {
+      const phoneErrors = validateField('phoneNumber', phoneNumber);
+      if (phoneErrors.phoneNumber) return phoneErrors.phoneNumber;
+    }
+    
     return null;
   };
 
@@ -268,11 +320,24 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
                     <input
                       type="text"
                       value={businessAddress}
-                      onChange={(e) => setBusinessAddress(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setBusinessAddress(e.target.value);
+                        const errors = validateField('businessAddress', e.target.value);
+                        setValidationErrors(prev => ({
+                          ...prev,
+                          businessAddress: errors.businessAddress || ''
+                        }));
+                      }}
+                      placeholder="123 Main Street, City, State"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        validationErrors.businessAddress ? 'border-red-300' : 'border-gray-300'
+                      }`}
                       required
                       disabled={loading}
                     />
+                    {validationErrors.businessAddress && (
+                      <p className="text-xs text-red-600 mt-1">{validationErrors.businessAddress}</p>
+                    )}
                   </div>
 
                   <div>
@@ -306,10 +371,23 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
                     <input
                       type="tel"
                       value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setPhoneNumber(e.target.value);
+                        const errors = validateField('phoneNumber', e.target.value);
+                        setValidationErrors(prev => ({
+                          ...prev,
+                          phoneNumber: errors.phoneNumber || ''
+                        }));
+                      }}
+                      placeholder="+65 12345678"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        validationErrors.phoneNumber ? 'border-red-300' : 'border-gray-300'
+                      }`}
                       disabled={loading}
                     />
+                    {validationErrors.phoneNumber && (
+                      <p className="text-xs text-red-600 mt-1">{validationErrors.phoneNumber}</p>
+                    )}
                   </div>
 
                   <div>
@@ -389,7 +467,19 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
                     {coverUrl && (
                       <div className="mt-2">
                         <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden relative">
-                          <Image src={coverUrl} alt="Cover preview" className="w-full h-full object-cover" fill sizes="(max-width: 768px) 100vw, 50vw" />
+                          {coverUrl.startsWith('http') ? (
+                            <Image 
+                              src={coverUrl} 
+                              alt="Cover preview" 
+                              fill
+                              className="object-cover" 
+                              sizes="(max-width: 768px) 100vw, 50vw" 
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
+                              Please enter a valid URL (http:// or https://)
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}

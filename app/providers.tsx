@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 export function Providers(props: { children: ReactNode }) {
   return (
     <MiniKitProvider
-      apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+      apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY!}
       chain={baseSepolia}
       config={{
         appearance: {

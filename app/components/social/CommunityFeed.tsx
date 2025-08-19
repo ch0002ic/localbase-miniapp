@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { useMiniKit, useComposeCast } from '@coinbase/onchainkit/minikit';
-import { MessageCircle, Heart, Share2, MapPin, Clock, Users, TrendingUp, Trash2 } from 'lucide-react';
+import { MessageCircle, Heart, Share2, MapPin, Clock, Users, TrendingUp, Trash2, Edit, Check, X } from 'lucide-react';
 import { CommunityPost } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
 import { CommunityPostSkeleton } from '../ui/Skeleton';
@@ -31,7 +31,16 @@ export function CommunityFeed() {
     author: string;
     content: string;
     timestamp: number;
+    likes?: number;
   }>}>({});
+  
+  // Comment editing state
+  const [editingComment, setEditingComment] = useState<string | null>(null);
+  const [editingCommentContent, setEditingCommentContent] = useState('');
+  
+  // Comment likes state
+  const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+  const [commentLikes, setCommentLikes] = useState<{[commentId: string]: number}>({});
   
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -52,7 +61,14 @@ export function CommunityFeed() {
         if (storedLikes) {
           try {
             const likeData = JSON.parse(storedLikes);
-            likesCount = likeData.count || likeData || 0; // Handle both old and new format
+            // Ensure we always get a number
+            if (typeof likeData === 'object' && likeData.count !== undefined) {
+              likesCount = Number(likeData.count) || 0;
+            } else if (typeof likeData === 'number') {
+              likesCount = likeData;
+            } else {
+              likesCount = 0;
+            }
           } catch (error) {
             console.error(`Error parsing likes for post ${post.id}:`, error);
             likesCount = 0;
@@ -105,17 +121,19 @@ export function CommunityFeed() {
     if (isConnected && address) {
       // User just connected wallet - load their previous likes
       console.log(`Wallet connected: ${address}, loading previous likes...`);
+      
+      // Load post likes
       const userLikesKey = `user_likes_${address}`;
       const userLikes = localStorage.getItem(userLikesKey);
       if (userLikes) {
         try {
           const likedPostIds = JSON.parse(userLikes);
           setLikedPosts(new Set(likedPostIds));
-          console.log(`✅ Loaded ${likedPostIds.length} previous likes for user ${address}`);
+          console.log(`✅ Loaded ${likedPostIds.length} previous post likes for user ${address}`);
           
           // Show a subtle notification that likes were restored
           if (likedPostIds.length > 0) {
-            console.log(`🔄 Restored your ${likedPostIds.length} previous likes`);
+            console.log(`🔄 Restored your ${likedPostIds.length} previous post likes`);
           }
         } catch (error) {
           console.error('Error loading user likes:', error);
@@ -124,12 +142,29 @@ export function CommunityFeed() {
       } else {
         // No previous likes found
         setLikedPosts(new Set());
-        console.log(`✨ Welcome! No previous likes found for user ${address}`);
+        console.log(`✨ Welcome! No previous post likes found for user ${address}`);
+      }
+
+      // Load comment likes
+      const userCommentLikesKey = `user_comment_likes_${address}`;
+      const userCommentLikes = localStorage.getItem(userCommentLikesKey);
+      if (userCommentLikes) {
+        try {
+          const likedCommentIds = JSON.parse(userCommentLikes);
+          setLikedComments(new Set(likedCommentIds));
+          console.log(`✅ Loaded ${likedCommentIds.length} previous comment likes for user ${address}`);
+        } catch (error) {
+          console.error('Error loading user comment likes:', error);
+          setLikedComments(new Set());
+        }
+      } else {
+        setLikedComments(new Set());
       }
     } else {
-      // User disconnected wallet - clear liked posts state
-      console.log('🔌 Wallet disconnected, clearing liked posts state');
+      // User disconnected wallet - clear liked state
+      console.log('🔌 Wallet disconnected, clearing liked state');
       setLikedPosts(new Set());
+      setLikedComments(new Set());
     }
   }, [isConnected, address]);
   
@@ -157,12 +192,12 @@ export function CommunityFeed() {
     
     console.log(`User ${address} has now liked ${newLikedPosts.size} posts total`);
 
-    // Update posts with new like count
+    // Update posts with new like count (ensure no negative likes)
     const updatedPosts = posts.map(post => 
       post.id === postId 
         ? { 
             ...post, 
-            likes: isLiked ? post.likes - 1 : post.likes + 1 
+            likes: isLiked ? Math.max(0, post.likes - 1) : post.likes + 1 
           }
         : post
     );
@@ -374,7 +409,41 @@ export function CommunityFeed() {
     const storedComments = localStorage.getItem(commentsKey);
     if (storedComments) {
       const comments = JSON.parse(storedComments);
-      setPostComments(prev => ({ ...prev, [postId]: comments }));
+      
+      // Load likes for each comment
+      const commentsWithLikes = comments.map((comment: {
+        id: string;
+        author: string;
+        content: string;
+        timestamp: number;
+        likes?: number;
+      }) => {
+        const commentLikesKey = `comment_likes_${comment.id}`;
+        const commentLikesData = localStorage.getItem(commentLikesKey);
+        let likesCount = 0;
+        
+        if (commentLikesData) {
+          try {
+            const likeData = JSON.parse(commentLikesData);
+            likesCount = likeData.count || 0;
+          } catch (error) {
+            console.error(`Error parsing comment likes for ${comment.id}:`, error);
+          }
+        }
+        
+        // Update commentLikes state
+        setCommentLikes(prev => ({
+          ...prev,
+          [comment.id]: likesCount
+        }));
+        
+        return {
+          ...comment,
+          likes: likesCount
+        };
+      });
+      
+      setPostComments(prev => ({ ...prev, [postId]: commentsWithLikes }));
     }
   };
 
@@ -386,7 +455,8 @@ export function CommunityFeed() {
       id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       author: `${address.slice(0, 6)}...${address.slice(-4)}`,
       content: commentText,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      likes: 0
     };
 
     // Add to local state
@@ -443,6 +513,123 @@ export function CommunityFeed() {
     }
   };
 
+  const startEditingComment = (commentId: string, currentContent: string) => {
+    setEditingComment(commentId);
+    setEditingCommentContent(currentContent);
+  };
+
+  const cancelEditingComment = () => {
+    setEditingComment(null);
+    setEditingCommentContent('');
+  };
+
+  const saveEditComment = async (postId: string, commentId: string) => {
+    if (!editingCommentContent.trim() || !isConnected || !address) return;
+
+    try {
+      // Update local state
+      const currentComments = postComments[postId] || [];
+      const updatedComments = currentComments.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, content: editingCommentContent.trim() }
+          : comment
+      );
+      setPostComments(prev => ({ ...prev, [postId]: updatedComments }));
+
+      // Save to localStorage
+      const commentsKey = `comments_${postId}`;
+      localStorage.setItem(commentsKey, JSON.stringify(updatedComments));
+
+      // Reset editing state
+      setEditingComment(null);
+      setEditingCommentContent('');
+
+      console.log(`✅ Comment edited successfully`);
+    } catch (error) {
+      console.error('Error editing comment:', error);
+      alert('❌ Failed to edit comment');
+    }
+  };
+
+  const handleCommentLike = (postId: string, commentId: string) => {
+    if (!isConnected || !address) {
+      alert('Please connect your wallet to like comments');
+      return;
+    }
+
+    const isLiked = likedComments.has(commentId);
+    console.log(`User ${address} ${isLiked ? 'unliking' : 'liking'} comment ${commentId}`);
+
+    // Update liked comments state
+    const newLikedComments = new Set(likedComments);
+    if (isLiked) {
+      newLikedComments.delete(commentId);
+    } else {
+      newLikedComments.add(commentId);
+    }
+    setLikedComments(newLikedComments);
+
+    // Save user's liked comments to localStorage
+    const userCommentLikesKey = `user_comment_likes_${address}`;
+    localStorage.setItem(userCommentLikesKey, JSON.stringify(Array.from(newLikedComments)));
+
+    // Update comment likes count (ensure no negative likes)
+    const currentLikes = commentLikes[commentId] || 0;
+    const newLikesCount = isLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1;
+    
+    setCommentLikes(prev => ({
+      ...prev,
+      [commentId]: newLikesCount
+    }));
+
+    // Update comments in postComments state
+    const currentComments = postComments[postId] || [];
+    const updatedComments = currentComments.map(comment => 
+      comment.id === commentId 
+        ? { ...comment, likes: newLikesCount }
+        : comment
+    );
+    setPostComments(prev => ({ ...prev, [postId]: updatedComments }));
+
+    // Save comment likes to localStorage
+    const commentLikesKey = `comment_likes_${commentId}`;
+    const existingCommentLikesData = localStorage.getItem(commentLikesKey);
+    let existingUsers: string[] = [];
+    
+    if (existingCommentLikesData) {
+      try {
+        const data = JSON.parse(existingCommentLikesData);
+        existingUsers = data.users || [];
+      } catch (error) {
+        console.error('Error parsing existing comment like data:', error);
+      }
+    }
+
+    // Update user list
+    const updatedUsers = [...existingUsers];
+    if (isLiked) {
+      // Remove user from likes
+      const userIndex = updatedUsers.indexOf(address);
+      if (userIndex > -1) {
+        updatedUsers.splice(userIndex, 1);
+      }
+    } else {
+      // Add user to likes (prevent duplicates)
+      if (!updatedUsers.includes(address)) {
+        updatedUsers.push(address);
+      }
+    }
+
+    const commentLikeData = {
+      count: newLikesCount,
+      users: updatedUsers,
+      lastUpdated: Date.now()
+    };
+    localStorage.setItem(commentLikesKey, JSON.stringify(commentLikeData));
+
+    console.log(`Comment ${commentId} now has ${newLikesCount} likes`);
+  };
+
   // Enhanced share function with MiniKit
   const handleShare = async (post: CommunityPost) => {
     const shareData = {
@@ -479,6 +666,12 @@ export function CommunityFeed() {
         alert('Post link copied to clipboard!');
       }
     } catch (error) {
+      // Handle share cancellation silently (user action, not an error)
+      if (error instanceof Error && error.name === 'AbortError') {
+        // User cancelled the share, don't show error
+        return;
+      }
+      
       console.error('Error sharing post:', error);
       // If all else fails, show share options
       const shareText = `Check out this post on LocalBase:\n\n"${post.content}"\n\n- ${post.authorName}\n\n${window.location.href}`;
@@ -732,7 +925,7 @@ export function CommunityFeed() {
                   title={!isConnected ? 'Connect wallet to like posts' : ''}
                 >
                   <Heart className={`w-4 h-4 ${likedPosts.has(post.id) && isConnected ? 'fill-current' : ''}`} />
-                  <span className="text-sm font-medium">{post.likes || 0}</span>
+                  <span className="text-sm font-medium">{Number(post.likes) || 0}</span>
                 </button>
                 
                 <button 
@@ -742,7 +935,7 @@ export function CommunityFeed() {
                   }`}
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span className="text-sm font-medium">{post.comments || 0}</span>
+                  <span className="text-sm font-medium">{Number(post.comments) || 0}</span>
                 </button>
                 
                 <button 
@@ -801,18 +994,87 @@ export function CommunityFeed() {
                                 <span className="font-medium text-sm text-gray-900">{comment.author}</span>
                                 <span className="text-xs text-gray-500">{formatTimeAgo(comment.timestamp)}</span>
                               </div>
-                              {/* Delete button for comment author */}
+                              {/* Edit and Delete buttons for comment author */}
                               {isConnected && address && comment.author === `${address.slice(0, 6)}...${address.slice(-4)}` && (
-                                <button
-                                  onClick={() => deleteComment(post.id, comment.id)}
-                                  className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-gray-200"
-                                  title="Delete comment"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                  {editingComment === comment.id ? (
+                                    <>
+                                      <button
+                                        onClick={() => saveEditComment(post.id, comment.id)}
+                                        className="text-green-500 hover:text-green-600 transition-colors p-1 rounded hover:bg-gray-200"
+                                        title="Save changes"
+                                      >
+                                        <Check className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        onClick={cancelEditingComment}
+                                        className="text-gray-500 hover:text-gray-600 transition-colors p-1 rounded hover:bg-gray-200"
+                                        title="Cancel editing"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => startEditingComment(comment.id, comment.content)}
+                                        className="text-gray-400 hover:text-blue-500 transition-colors p-1 rounded hover:bg-gray-200"
+                                        title="Edit comment"
+                                      >
+                                        <Edit className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        onClick={() => deleteComment(post.id, comment.id)}
+                                        className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-gray-200"
+                                        title="Delete comment"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               )}
                             </div>
-                            <p className="text-sm text-gray-700">{comment.content}</p>
+                            {editingComment === comment.id ? (
+                              <div className="mt-2">
+                                <input
+                                  type="text"
+                                  value={editingCommentContent}
+                                  onChange={(e) => setEditingCommentContent(e.target.value)}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      saveEditComment(post.id, comment.id);
+                                    } else if (e.key === 'Escape') {
+                                      cancelEditingComment();
+                                    }
+                                  }}
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  autoFocus
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Press Enter to save, Escape to cancel</p>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-sm text-gray-700">{comment.content}</p>
+                                {/* Comment like button */}
+                                <div className="flex items-center gap-2 mt-2">
+                                  <button
+                                    onClick={() => handleCommentLike(post.id, comment.id)}
+                                    className={`flex items-center gap-1 text-xs transition-colors ${
+                                      likedComments.has(comment.id)
+                                        ? 'text-red-500 hover:text-red-600'
+                                        : 'text-gray-500 hover:text-red-500'
+                                    }`}
+                                    disabled={!isConnected}
+                                  >
+                                    <Heart 
+                                      className={`w-3 h-3 ${likedComments.has(comment.id) ? 'fill-current' : ''}`} 
+                                    />
+                                    <span className="font-medium">{comment.likes || 0}</span>
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

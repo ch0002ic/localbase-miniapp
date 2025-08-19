@@ -93,8 +93,22 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
         break;
 
       case 'businessAddress':
-        if (!value.trim()) errors.businessAddress = 'Business address is required';
-        else if (value.length < 10) errors.businessAddress = 'Please enter a complete address';
+        if (!value.trim()) {
+          errors.businessAddress = 'Business address is required';
+        } else if (value.length < 10) {
+          errors.businessAddress = 'Please enter a complete address';
+        } else {
+          // Check for basic address components (numbers, street indicators, common address patterns)
+          const addressPattern = /^[0-9]+.*[a-zA-Z]+.*(street|st|road|rd|avenue|ave|blvd|boulevard|lane|ln|drive|dr|place|pl|way|court|ct|circle|cir)/i;
+          const hasNumbers = /\d/.test(value);
+          const hasLetters = /[a-zA-Z]/.test(value);
+          
+          if (!hasNumbers || !hasLetters) {
+            errors.businessAddress = 'Please enter a valid street address (e.g., 123 Main Street)';
+          } else if (!addressPattern.test(value) && value.length < 20) {
+            errors.businessAddress = 'Please enter a complete street address with street name';
+          }
+        }
         break;
 
       case 'email':
@@ -110,8 +124,13 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
         break;
 
       case 'phoneNumber':
-        if (value && !/^[\+]?[0-9\s\-\(\)]{8,}$/.test(value)) {
-          errors.phoneNumber = 'Please enter a valid phone number';
+        if (value) {
+          // Improved phone number validation for international format
+          // Accepts formats like: +65 12345678, +886 123456789, +1 2345678901
+          const phoneRegex = /^\+\d{1,4}\s\d{8,11}$/;
+          if (!phoneRegex.test(value)) {
+            errors.phoneNumber = 'Please enter a valid international phone number (e.g., +65 12345678)';
+          }
         }
         break;
     }
@@ -431,7 +450,7 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                         phoneNumber: errors.phoneNumber || ''
                       }));
                     }}
-                    placeholder="+65 6XXX XXXX"
+                    placeholder="+65 12345678"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       validationErrors.phoneNumber ? 'border-red-300' : 'border-gray-300'
                     }`}

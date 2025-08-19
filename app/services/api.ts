@@ -461,12 +461,19 @@ export class LocalBaseAPI {
       const businesses = await PersistentStorage.getStoredBusinesses();
       const businessIndex = businesses.findIndex(b => b.id === businessId);
       
-      if (businessIndex !== -1 && reviews.length > 0) {
-        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-        businesses[businessIndex].averageRating = totalRating / reviews.length;
-        businesses[businessIndex].totalReviews = reviews.length;
+      if (businessIndex !== -1) {
+        if (reviews.length > 0) {
+          const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+          businesses[businessIndex].averageRating = totalRating / reviews.length;
+          businesses[businessIndex].totalReviews = reviews.length;
+        } else {
+          // When no reviews, set rating to 0 and review count to 0
+          businesses[businessIndex].averageRating = 0;
+          businesses[businessIndex].totalReviews = 0;
+        }
         
         await PersistentStorage.saveBusinesses(businesses);
+        console.log(`✅ Business ${businessId} rating updated: ${businesses[businessIndex].averageRating.toFixed(1)} (${businesses[businessIndex].totalReviews} reviews)`);
       }
     } catch (error) {
       console.error('Error updating business rating:', error);
