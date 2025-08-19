@@ -203,6 +203,63 @@ export class LocalBaseAPI {
     }
   }
 
+  static async updateReview(reviewId: string, updateData: {
+    rating?: number;
+    comment?: string;
+  }): Promise<void> {
+    try {
+      const reviews = await PersistentStorage.getStoredReviews();
+      const reviewIndex = reviews.findIndex(r => r.id === reviewId);
+      
+      if (reviewIndex === -1) {
+        throw new Error('Review not found');
+      }
+      
+      // Update the review
+      reviews[reviewIndex] = {
+        ...reviews[reviewIndex],
+        ...updateData,
+        timestamp: Date.now() // Update timestamp to show it was edited
+      };
+      
+      await PersistentStorage.saveReviews(reviews);
+      
+      // Update business average rating if rating was changed
+      if (updateData.rating !== undefined) {
+        await this.updateBusinessRating(reviews[reviewIndex].businessId);
+      }
+    } catch (error) {
+      console.error('Error updating review:', error);
+      throw error;
+    }
+  }
+
+  static async updateCommunityPost(postId: string, updateData: {
+    content?: string;
+    tags?: string[];
+  }): Promise<void> {
+    try {
+      const posts = await PersistentStorage.getStoredPosts();
+      const postIndex = posts.findIndex(p => p.id === postId);
+      
+      if (postIndex === -1) {
+        throw new Error('Post not found');
+      }
+      
+      // Update the post
+      posts[postIndex] = {
+        ...posts[postIndex],
+        ...updateData,
+        timestamp: Date.now() // Update timestamp to show it was edited
+      };
+      
+      await PersistentStorage.savePosts(posts);
+    } catch (error) {
+      console.error('Error updating community post:', error);
+      throw error;
+    }
+  }
+
   static async toggleReviewHelpful(reviewId: string, userAddress: string): Promise<boolean> {
     try {
       const reviews = await PersistentStorage.getStoredReviews();

@@ -6,6 +6,7 @@ import { useMiniKit, useComposeCast } from '@coinbase/onchainkit/minikit';
 import { MessageCircle, Heart, Share2, MapPin, Clock, Users, TrendingUp } from 'lucide-react';
 import { CommunityPost } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
+import { CommunityPostSkeleton } from '../ui/Skeleton';
 
 export function CommunityFeed() {
   const { address, isConnected } = useAccount();
@@ -16,6 +17,11 @@ export function CommunityFeed() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'feed' | 'trending' | 'local'>('feed');
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  
+  // Editing state
+  const [editingPost, setEditingPost] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+  const [editingTags, setEditingTags] = useState<string>('');
   
   // Comments state
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
@@ -205,6 +211,52 @@ export function CommunityFeed() {
     }
   };
   
+  const handleEditPost = (post: CommunityPost) => {
+    setEditingPost(post.id);
+    setEditingContent(post.content);
+    setEditingTags((post.tags || []).join(', '));
+  };
+
+  const handleSaveEdit = async (postId: string) => {
+    if (!isConnected || !address) return;
+
+    try {
+      // Parse tags from the comma-separated input
+      const inputTags = editingTags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+      
+      // Extract hashtags from content
+      const hashtagRegex = /#(\w+)/g;
+      const contentTags = [];
+      let match;
+      while ((match = hashtagRegex.exec(editingContent)) !== null) {
+        contentTags.push(match[1]);
+      }
+      
+      const allTags = [...new Set([...inputTags, ...contentTags])]; // Remove duplicates
+      
+      await LocalBaseAPI.updateCommunityPost(postId, {
+        content: editingContent.trim(),
+        tags: allTags
+      });
+      
+      setEditingPost(null);
+      setEditingContent('');
+      setEditingTags('');
+      fetchPosts(); // Refresh posts
+    } catch (error) {
+      console.error('Failed to update post:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPost(null);
+    setEditingContent('');
+    setEditingTags('');
+  };
+
   const addQuickTag = (tag: string) => {
     const tagText = `#${tag} `;
     setNewPost(prev => prev + tagText);
@@ -476,8 +528,10 @@ export function CommunityFeed() {
       
       {/* Posts Feed */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="space-y-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <CommunityPostSkeleton key={i} />
+          ))}
         </div>
       ) : posts.length === 0 ? (
         <div className="text-center py-12">
@@ -524,23 +578,75 @@ export function CommunityFeed() {
                     </div>
                   </div>
                 </div>
+                {/* Edit button for post author */}
+                {isConnected && address === post.authorAddress && (
+                  <div className="flex items-center space-x-1">
+                    {editingPost === post.id ? (
+                      <>
+                        <button
+                          onClick={() => handleSaveEdit(post.id)}
+                          disabled={!editingContent.trim()}
+                          className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-2 py-1 text-xs bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => handleEditPost(post)}
+                        className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               
               {/* Post Content */}
-              <p className="text-gray-800 mb-4 leading-relaxed">{post.content}</p>
-              
-              {/* Tags */}
-              {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {post.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+              {editingPost === post.id ? (
+                <div className="space-y-3 mb-4">
+                  <textarea
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    placeholder="What's happening in your neighborhood?"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    rows={4}
+                  />
+                  <div>
+                    <input
+                      type="text"
+                      value={editingTags}
+                      onChange={(e) => setEditingTags(e.target.value)}
+                      placeholder="Tags (comma-separated)"
+                      className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
                 </div>
+              ) : (
+                <>
+                  <p className="text-gray-800 mb-4 leading-relaxed">{post.content}</p>
+                  
+                  {/* Tags */}
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {post.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
               
               {/* Post Actions */}

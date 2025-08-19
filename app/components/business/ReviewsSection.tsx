@@ -15,6 +15,8 @@ interface ReviewsSectionProps {
 
 export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: ReviewsSectionProps) {
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [editingReview, setEditingReview] = useState<string | null>(null);
+  const [editingData, setEditingData] = useState<{ rating: number; comment: string }>({ rating: 5, comment: '' });
   const [newReview, setNewReview] = useState({
     rating: 5,
     comment: '',
@@ -78,6 +80,41 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEditReview = (review: Review) => {
+    setEditingReview(review.id);
+    setEditingData({ rating: review.rating, comment: review.comment });
+  };
+
+  const handleSaveEdit = async (reviewId: string) => {
+    if (!isConnected || !address) {
+      showErrorFeedback('Please connect your wallet');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await LocalBaseAPI.updateReview(reviewId, {
+        rating: editingData.rating,
+        comment: editingData.comment.trim()
+      });
+      
+      setEditingReview(null);
+      setEditingData({ rating: 5, comment: '' });
+      onReviewSubmitted(); // Refresh reviews
+      showSuccessFeedback('Review updated successfully!');
+    } catch (error) {
+      console.error('Error updating review:', error);
+      showErrorFeedback('Failed to update review. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReview(null);
+    setEditingData({ rating: 5, comment: '' });
   };
 
   const handleHelpfulVote = async (reviewId: string) => {
@@ -285,10 +322,59 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
                     </div>
                   </div>
                 </div>
-                {renderStars(review.rating)}
+                <div className="flex items-center space-x-2">
+                  {editingReview === review.id ? (
+                    <div className="flex items-center space-x-1">
+                      {renderStars(editingData.rating, true, (rating) => setEditingData(prev => ({ ...prev, rating })))}
+                    </div>
+                  ) : (
+                    renderStars(review.rating)
+                  )}
+                  {/* Edit button for review author */}
+                  {isConnected && address === review.userAddress && (
+                    <div className="flex items-center space-x-1 ml-3">
+                      {editingReview === review.id ? (
+                        <>
+                          <button
+                            onClick={() => handleSaveEdit(review.id)}
+                            disabled={submitting || !editingData.comment.trim()}
+                            className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {submitting ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            disabled={submitting}
+                            className="px-2 py-1 text-xs bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleEditReview(review)}
+                          className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <p className="text-gray-700 mb-3">{review.comment}</p>
+              {editingReview === review.id ? (
+                <textarea
+                  value={editingData.comment}
+                  onChange={(e) => setEditingData(prev => ({ ...prev, comment: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  rows={3}
+                  placeholder="Share your experience..."
+                  disabled={submitting}
+                />
+              ) : (
+                <p className="text-gray-700 mb-3">{review.comment}</p>
+              )}
 
               {/* Review Photos */}
               {review.photos && review.photos.length > 0 && (
