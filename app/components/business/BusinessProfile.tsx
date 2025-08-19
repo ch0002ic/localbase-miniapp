@@ -134,10 +134,9 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
     const openMinutes = timeToMinutes(openTime);
     const closeMinutes = timeToMinutes(closeTime);
     
-    // Handle cross-midnight hours (e.g., 09:00 - 02:00 means 9am to 2am next day)
+    // Handle cross-midnight hours (e.g., 06:00 - 05:59 means 6am to 5:59am next day)
     if (closeMinutes < openMinutes) {
-      // Business crosses midnight
-      // Open if current time is after opening OR before closing
+      // Business crosses midnight - open if current time is after opening OR before closing
       return currentMinutes >= openMinutes || currentMinutes <= closeMinutes;
     }
     

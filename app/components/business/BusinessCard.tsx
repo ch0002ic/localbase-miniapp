@@ -54,10 +54,30 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
     if (!todayHours) return 'Hours not available';
     if (todayHours.closed) return 'Closed today';
     
-    // Check if currently open
+    // Check if currently open - handle cross-midnight hours
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5);
-    const isCurrentlyOpen = currentTime >= todayHours.open && currentTime <= todayHours.close;
+    
+    // Convert time strings to minutes for proper comparison
+    const timeToMinutes = (time: string) => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+    
+    const currentMinutes = timeToMinutes(currentTime);
+    const openMinutes = timeToMinutes(todayHours.open);
+    const closeMinutes = timeToMinutes(todayHours.close);
+    
+    let isCurrentlyOpen = false;
+    
+    // Handle cross-midnight hours (e.g., 06:00 - 05:59 means 6am to 5:59am next day)
+    if (closeMinutes < openMinutes) {
+      // Business crosses midnight - open if current time is after opening OR before closing
+      isCurrentlyOpen = currentMinutes >= openMinutes || currentMinutes <= closeMinutes;
+    } else {
+      // Normal hours (same day)
+      isCurrentlyOpen = currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
+    }
     
     // Format time from 24-hour to 12-hour format
     const formatTime = (time: string) => {
