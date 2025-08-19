@@ -143,6 +143,7 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
           instagram: socialLinks.instagram.trim() || undefined,
           twitter: socialLinks.twitter.trim() || undefined,
           facebook: socialLinks.facebook.trim() || undefined,
+          linkedin: socialLinks.linkedin.trim() || undefined,
         }
       };
 

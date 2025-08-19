@@ -19,6 +19,7 @@ export function BusinessDirectory() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'discover' | 'my-businesses'>('discover');
+  const [refreshKey, setRefreshKey] = useState(0);
   const { isConnected } = useAccount();
   
   const categories: Array<{ id: BusinessCategory | 'all'; label: string; icon: string }> = [
@@ -78,6 +79,9 @@ export function BusinessDirectory() {
 
   const handleBackToDirectory = () => {
     setSelectedBusinessId(null);
+    // Refresh businesses list to reflect any changes made while viewing profile
+    setRefreshKey(prev => prev + 1);
+    fetchBusinesses();
   };
 
   // If a business is selected, show its profile
@@ -163,6 +167,7 @@ export function BusinessDirectory() {
         <MyBusinesses
           onCreateBusiness={() => setShowRegisterModal(true)}
           onViewBusiness={(businessId) => setSelectedBusinessId(businessId)}
+          refreshKey={refreshKey}
         />
       ) : (
         <>

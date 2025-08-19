@@ -486,8 +486,8 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
           onSuccess={() => {
             console.log('Business updated successfully');
             setShowEditModal(false);
-            // You might want to refresh the business data here
-            // or update the parent component's state
+            // Refresh business data to reflect changes immediately
+            loadBusinessData();
           }}
         />
       )}

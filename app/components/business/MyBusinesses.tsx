@@ -18,9 +18,10 @@ import {
 interface MyBusinessesProps {
   onCreateBusiness: () => void;
   onViewBusiness: (businessId: string) => void;
+  refreshKey?: number;
 }
 
-export function MyBusinesses({ onCreateBusiness, onViewBusiness }: MyBusinessesProps) {
+export function MyBusinesses({ onCreateBusiness, onViewBusiness, refreshKey }: MyBusinessesProps) {
   const [myBusinesses, setMyBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -49,6 +50,13 @@ export function MyBusinesses({ onCreateBusiness, onViewBusiness }: MyBusinessesP
   useEffect(() => {
     loadMyBusinesses();
   }, [loadMyBusinesses]);
+
+  // Refresh when refreshKey changes (when returning from business profile)
+  useEffect(() => {
+    if (refreshKey && refreshKey > 0) {
+      loadMyBusinesses();
+    }
+  }, [refreshKey, loadMyBusinesses]);
 
   const handleToggleStatus = async (businessId: string, currentStatus: boolean) => {
     if (!SmartContractService.isEnabled()) {
