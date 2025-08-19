@@ -6,6 +6,7 @@ import { useAccount } from 'wagmi';
 import { useMiniKit, useComposeCast, useOpenUrl } from '@coinbase/onchainkit/minikit';
 import { Business } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
+import { isValidImageUrl } from '../../utils/validation';
 import { PaymentTransaction } from './PaymentTransaction';
 import { VerificationBadge } from '../VerificationBadge';
 import { Star, MapPin, Clock, ExternalLink, CreditCard, Share2 } from 'lucide-react';
@@ -183,16 +184,24 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
               {business.avatarUrl ? (
-                business.avatarUrl.startsWith('http') ? (
+                isValidImageUrl(business.avatarUrl) ? (
                   <Image 
                     src={business.avatarUrl} 
                     alt={business.name}
                     className="w-full h-full rounded-lg object-cover"
                     width={48}
                     height={48}
+                    onError={(e) => {
+                      console.error('Failed to load business card avatar:', business.avatarUrl);
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 ) : (
-                  <span className="text-2xl">{business.avatarUrl}</span>
+                  business.avatarUrl.length < 10 ? (
+                    <span className="text-2xl">{business.avatarUrl}</span>
+                  ) : (
+                    <span className="text-xs text-gray-400">Invalid Image</span>
+                  )
                 )
               ) : (
                 <span className="text-2xl">🏪</span>

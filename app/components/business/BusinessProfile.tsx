@@ -5,6 +5,7 @@ import { useAccount } from 'wagmi';
 import Image from 'next/image';
 import { Business, Review, BusinessAnalytics } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
+import { isValidImageUrl } from '../../utils/validation';
 import { ReviewsSection } from './ReviewsSection';
 import { BusinessAnalyticsDashboard } from './BusinessAnalyticsDashboard';
 import { PaymentTransaction } from './PaymentTransaction';
@@ -164,13 +165,17 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
             <div className="w-20 h-20 bg-white rounded-full p-1">
               {business.avatarUrl ? (
                 <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
-                  {business.avatarUrl.startsWith('http') ? (
+                  {isValidImageUrl(business.avatarUrl) ? (
                     <Image 
                       src={business.avatarUrl} 
                       alt={business.name}
                       className="w-full h-full rounded-full object-cover"
                       width={80}
                       height={80}
+                      onError={(e) => {
+                        console.error('Failed to load business avatar:', business.avatarUrl);
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   ) : (
                     <span className="text-2xl">{business.avatarUrl}</span>

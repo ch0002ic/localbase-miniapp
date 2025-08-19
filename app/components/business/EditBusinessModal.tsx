@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { Business, BusinessCategory } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
+import { isValidImageUrl } from '../../utils/validation';
 import { X, Save, Loader2, AlertCircle } from 'lucide-react';
 
 interface EditBusinessModalProps {
@@ -442,10 +443,26 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
                     {avatarUrl && (
                       <div className="mt-2">
                         <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                          {avatarUrl.startsWith('http') ? (
-                            <Image src={avatarUrl} alt="Avatar preview" className="w-full h-full rounded-lg object-cover" width={64} height={64} />
+                          {isValidImageUrl(avatarUrl) ? (
+                            <Image 
+                              src={avatarUrl} 
+                              alt="Avatar preview" 
+                              className="w-full h-full rounded-lg object-cover" 
+                              width={64} 
+                              height={64}
+                              onError={(e) => {
+                                console.error('Failed to load avatar image:', avatarUrl);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
                           ) : (
-                            <span className="text-2xl">{avatarUrl}</span>
+                            avatarUrl.length < 10 ? (
+                              <span className="text-2xl">{avatarUrl}</span>
+                            ) : (
+                              <div className="text-xs text-red-500 text-center p-1">
+                                Invalid URL
+                              </div>
+                            )
                           )}
                         </div>
                       </div>
@@ -467,13 +484,17 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
                     {coverUrl && (
                       <div className="mt-2">
                         <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden relative">
-                          {coverUrl.startsWith('http') ? (
+                          {isValidImageUrl(coverUrl) ? (
                             <Image 
                               src={coverUrl} 
                               alt="Cover preview" 
                               fill
                               className="object-cover" 
-                              sizes="(max-width: 768px) 100vw, 50vw" 
+                              sizes="(max-width: 768px) 100vw, 50vw"
+                              onError={(e) => {
+                                console.error('Failed to load cover image:', coverUrl);
+                                e.currentTarget.style.display = 'none';
+                              }}
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">

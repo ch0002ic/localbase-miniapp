@@ -35,6 +35,30 @@ export const validateImageUrl = (url: string): { isValid: boolean; error?: strin
   return { isValid: true };
 };
 
+/**
+ * Checks if a URL is valid for use with Next.js Image component
+ * @param url - The URL to validate
+ * @returns boolean - True if URL is valid for Image component
+ */
+export function isValidImageUrl(url: string | undefined | null): boolean {
+  if (!url || typeof url !== 'string') {
+    return false;
+  }
+  
+  // Must start with http:// or https://
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return false;
+  }
+  
+  // Must be a complete URL (basic check)
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const formatBusinessHours = (hours: Record<string, { open: string; close: string; closed?: boolean }>) => {
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   const formatted: Record<string, { open: string; close: string; closed: boolean }> = {};

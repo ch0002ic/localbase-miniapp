@@ -22,6 +22,7 @@ import { NetworkStatus } from './components/NetworkStatus';
 import { SmartContractStatus } from './components/SmartContractStatus';
 import { FundingHelper } from './components/FundingHelper';
 import { UserSpendingDashboard } from './components/UserSpendingDashboard';
+import { LocalBaseAPI } from './services/api';
 
 export default function LocalBase() {
   const [activeTab, setActiveTab] = useState('discover');
@@ -31,6 +32,9 @@ export default function LocalBase() {
     if (!isFrameReady) {
       setFrameReady();
     }
+    
+    // Cleanup corrupted data on app initialization
+    LocalBaseAPI.cleanupCorruptedData();
   }, [setFrameReady, isFrameReady]);
   
   const tabs = [

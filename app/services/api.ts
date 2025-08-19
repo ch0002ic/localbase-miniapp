@@ -1,7 +1,38 @@
 import { PersistentStorage } from './storage';
 import { Business, CommunityPost, Review, BusinessAnalytics } from '../types/localbase';
+import { isValidImageUrl } from '../utils/validation';
 
 export class LocalBaseAPI {
+  // Clean up invalid image URLs from business data
+  private static cleanupBusinessImageUrls(business: Business): Business {
+    return {
+      ...business,
+      avatarUrl: isValidImageUrl(business.avatarUrl) ? business.avatarUrl : '',
+      coverUrl: isValidImageUrl(business.coverUrl) ? business.coverUrl : ''
+    };
+  }
+
+  // Clean up all corrupted business data
+  static async cleanupCorruptedData(): Promise<void> {
+    try {
+      const businesses = await PersistentStorage.getStoredBusinesses();
+      const cleanedBusinesses = businesses.map(business => this.cleanupBusinessImageUrls(business));
+      
+      // Check if any changes were made
+      const hasChanges = businesses.some((business, index) => 
+        business.avatarUrl !== cleanedBusinesses[index].avatarUrl ||
+        business.coverUrl !== cleanedBusinesses[index].coverUrl
+      );
+      
+      if (hasChanges) {
+        await PersistentStorage.saveBusinesses(cleanedBusinesses);
+        console.log('✅ Cleaned up corrupted business data');
+      }
+    } catch (error) {
+      console.error('Error cleaning up corrupted data:', error);
+    }
+  }
+
   static async getBusinesses(category?: string): Promise<Business[]> {
     try {
       // Initialize default data if no businesses exist
@@ -9,12 +40,15 @@ export class LocalBaseAPI {
       
       const businesses = await PersistentStorage.getStoredBusinesses();
       
+      // Clean up invalid image URLs
+      const cleanedBusinesses = businesses.map(business => this.cleanupBusinessImageUrls(business));
+      
       // Filter by category if specified
       if (category && category !== 'all') {
-        return businesses.filter(business => business.category === category);
+        return cleanedBusinesses.filter(business => business.category === category);
       }
       
-      return businesses;
+      return cleanedBusinesses;
     } catch (error) {
       console.error('Error fetching businesses:', error);
       return [];
@@ -51,10 +85,13 @@ export class LocalBaseAPI {
         throw new Error('Business not found');
       }
       
+      // Clean up image URLs before updating
+      const cleanedBusiness = this.cleanupBusinessImageUrls(updatedBusiness);
+      
       // Update the business while preserving readonly fields
       businesses[businessIndex] = {
         ...businesses[businessIndex],
-        ...updatedBusiness,
+        ...cleanedBusiness,
         // Preserve these fields that shouldn't be edited
         id: businesses[businessIndex].id,
         owner: businesses[businessIndex].owner,
