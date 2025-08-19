@@ -35,6 +35,37 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
     };
     return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
+
+  const formatBusinessHours = (hours: Business['hours']) => {
+    if (!hours) return 'Hours not available';
+    
+    const today = new Date();
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const todayKey = days[today.getDay()];
+    const todayHours = hours[todayKey];
+    
+    if (!todayHours) return 'Hours not available';
+    if (todayHours.closed) return 'Closed today';
+    
+    // Format time from 24-hour to 12-hour format
+    const formatTime = (time: string) => {
+      const [hour, minute] = time.split(':');
+      const hourNum = parseInt(hour, 10);
+      const ampm = hourNum >= 12 ? 'PM' : 'AM';
+      const displayHour = hourNum === 0 ? 12 : hourNum > 12 ? hourNum - 12 : hourNum;
+      return `${displayHour}:${minute} ${ampm}`;
+    };
+    
+    const openTime = formatTime(todayHours.open);
+    const closeTime = formatTime(todayHours.close);
+    
+    // Handle 24-hour businesses
+    if (todayHours.open === '00:00' && todayHours.close === '23:59') {
+      return 'Open 24 hours';
+    }
+    
+    return `Open today ${openTime} - ${closeTime}`;
+  };
   
   const getReputationColor = (score: number) => {
     if (score >= 95) return 'text-green-600';
@@ -169,11 +200,11 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
               <span className={`font-semibold ${getReputationColor(business.reputationScore)}`}>
-                {(business.reputationScore / 20).toFixed(1)}
+                {(business.averageRating || 0).toFixed(1)}
               </span>
             </div>
             <p className="text-xs text-gray-500">
-              {business.totalTransactions} transactions
+              {business.totalReviews || 0} reviews
             </p>
           </div>
         </div>
@@ -194,7 +225,7 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
           {business.hours && (
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Clock className="w-4 h-4 flex-shrink-0" />
-              <span>Open today 9:00 AM - 6:00 PM</span>
+              <span>{formatBusinessHours(business.hours)}</span>
             </div>
           )}
         </div>

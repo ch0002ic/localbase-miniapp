@@ -272,7 +272,7 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
                     review.helpfulUsers?.includes(address || '') ? 'fill-current' : ''
                   }`} />
                   <span>
-                    {review.helpfulUsers?.includes(address || '') ? 'Helpful!' : 'Helpful'} ({review.helpful})
+                    {review.helpfulUsers?.includes(address || '') ? 'Helpful' : 'Helpful'} ({review.helpful})
                   </span>
                 </button>
                 {!isConnected && (

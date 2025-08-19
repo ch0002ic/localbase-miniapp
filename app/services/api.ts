@@ -21,6 +21,18 @@ export class LocalBaseAPI {
     }
   }
 
+  // Force refresh of default data (for testing/updating)
+  static async refreshDefaultData(): Promise<void> {
+    try {
+      PersistentStorage.clearAll();
+      PersistentStorage.initializeDefaultData();
+      console.log('✅ Default data refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing default data:', error);
+      throw error;
+    }
+  }
+
   static async addBusiness(business: Business): Promise<void> {
     try {
       await PersistentStorage.addBusiness(business);

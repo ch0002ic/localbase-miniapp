@@ -254,6 +254,37 @@ export class PersistentStorage {
           sunday: { open: '10:00', close: '23:00' },
         },
       },
+      {
+        id: '5',
+        name: 'LocalBase',
+        description: 'Decentralized Local Business Discovery & Payment Platform',
+        category: 'services',
+        address: '439A Sengkang West Ave',
+        latitude: 1.3966,
+        longitude: 103.9132,
+        owner: '0x1a2b3c4d...',
+        isActive: true,
+        totalTransactions: 1,
+        reputationScore: 100,
+        acceptsBasePay: true,
+        avatarUrl: 'L',
+        verified: true,
+        averageRating: 5.0,
+        totalReviews: 1,
+        phoneNumber: '+65 6XXX BBBB',
+        email: 'hello@localbase.sg',
+        website: 'https://localbase.vercel.app',
+        priceRange: '$',
+        hours: {
+          monday: { open: '00:00', close: '23:59' },
+          tuesday: { open: '00:00', close: '23:59' },
+          wednesday: { open: '00:00', close: '23:59' },
+          thursday: { open: '00:00', close: '23:59' },
+          friday: { open: '00:00', close: '23:59' },
+          saturday: { open: '00:00', close: '23:59' },
+          sunday: { open: '00:00', close: '23:59' },
+        },
+      },
     ];
   }
 
@@ -394,6 +425,20 @@ export class PersistentStorage {
         verified: true,
         helpful: 7,
         helpfulUsers: ['0xa1b2c3d4', '0xe5f6g7h8', '0xi9j0k1l2', '0xm3n4o5p6', '0xq7r8s9t0', '0xu1v2w3x4', '0xy5z6a7b8'],
+        photos: []
+      },
+      {
+        id: '6',
+        businessId: '5',
+        userId: '0xa96D...c403',
+        userAddress: '0xa96D...c403',
+        userName: '0xa96D...c403',
+        rating: 5,
+        comment: 'excellent platform! give it a 5/5',
+        timestamp: 1755486903000, // Aug 19, 2025
+        verified: true,
+        helpful: 3,
+        helpfulUsers: ['0xa1b2c3d4', '0xe5f6g7h8', '0xi9j0k1l2'],
         photos: []
       }
     ];
