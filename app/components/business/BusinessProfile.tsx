@@ -91,7 +91,12 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
     if (!business?.hours?.[day]) return 'Closed';
     const hours = business.hours[day];
     if (hours.closed) return 'Closed';
-    return `${hours.open} - ${hours.close}`;
+    
+    // Format times properly (convert 00:00 to 24:00 for display)
+    const openTime = hours.open;
+    const closeTime = hours.close === '00:00' ? '24:00' : hours.close;
+    
+    return `${openTime} - ${closeTime}`;
   };
 
   const isCurrentlyOpen = () => {
@@ -103,7 +108,17 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
     const todayHours = business.hours[currentDay];
     if (!todayHours || todayHours.closed) return false;
     
-    return currentTime >= todayHours.open && currentTime <= todayHours.close;
+    const openTime = todayHours.open;
+    const closeTime = todayHours.close;
+    
+    // Handle midnight case (00:00 means end of day)
+    if (closeTime === '00:00') {
+      // Business closes at midnight, so check if current time is after open time
+      return currentTime >= openTime;
+    }
+    
+    // Handle cases where business closes before midnight
+    return currentTime >= openTime && currentTime <= closeTime;
   };
 
   if (loading) {

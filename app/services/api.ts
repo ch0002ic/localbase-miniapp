@@ -16,21 +16,72 @@ export class LocalBaseAPI {
   static async cleanupCorruptedData(): Promise<void> {
     try {
       const businesses = await PersistentStorage.getStoredBusinesses();
-      const cleanedBusinesses = businesses.map(business => this.cleanupBusinessImageUrls(business));
+      let hasChanges = false;
       
-      // Check if any changes were made
-      const hasChanges = businesses.some((business, index) => 
-        business.avatarUrl !== cleanedBusinesses[index].avatarUrl ||
-        business.coverUrl !== cleanedBusinesses[index].coverUrl
-      );
+      const cleanedBusinesses = businesses.map(business => {
+        const originalBusiness = { ...business };
+        
+        // Clean up image URLs
+        const cleanedBusiness = this.cleanupBusinessImageUrls(business);
+        
+        // Fix business hours data - ensure times are in HH:MM format
+        if (cleanedBusiness.hours) {
+          const fixedHours: { [key: string]: { open: string; close: string; closed?: boolean } } = {};
+          
+          Object.entries(cleanedBusiness.hours).forEach(([day, hours]) => {
+            if (hours && typeof hours === 'object' && 'open' in hours && 'close' in hours) {
+              // Ensure time format is correct (HH:MM)
+              const openTime = this.normalizeTimeFormat(hours.open);
+              const closeTime = this.normalizeTimeFormat(hours.close);
+              
+              fixedHours[day] = {
+                open: openTime,
+                close: closeTime,
+                closed: hours.closed || false
+              };
+            }
+          });
+          
+          cleanedBusiness.hours = fixedHours;
+        }
+        
+        // Check if any changes were made
+        if (JSON.stringify(originalBusiness) !== JSON.stringify(cleanedBusiness)) {
+          hasChanges = true;
+        }
+        
+        return cleanedBusiness;
+      });
       
       if (hasChanges) {
         await PersistentStorage.saveBusinesses(cleanedBusinesses);
-        console.log('✅ Cleaned up corrupted business data');
+        console.log('✅ Cleaned up corrupted business data including hours');
       }
     } catch (error) {
       console.error('Error cleaning up corrupted data:', error);
     }
+  }
+
+  // Helper function to normalize time format
+  private static normalizeTimeFormat(time: string): string {
+    if (!time || typeof time !== 'string') return '09:00';
+    
+    // Remove any invalid characters and ensure HH:MM format
+    const cleaned = time.replace(/[^0-9:]/g, '');
+    const parts = cleaned.split(':');
+    
+    if (parts.length !== 2) return '09:00';
+    
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    
+    // Validate hours and minutes
+    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      return '09:00'; // Default fallback
+    }
+    
+    // Return properly formatted time
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
 
   static async getBusinesses(category?: string): Promise<Business[]> {
