@@ -191,19 +191,19 @@ export function BusinessDirectory() {
           </div>
           
           {/* Category Filter */}
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 px-4 py-3 rounded-full whitespace-nowrap transition-all min-w-fit touch-manipulation ${
                   selectedCategory === category.id
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-blue-500 text-white shadow-md scale-105'
+                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
                 }`}
               >
-                <span>{category.icon}</span>
-                <span className="font-medium">{category.label}</span>
+                <span className="text-base">{category.icon}</span>
+                <span className="font-medium text-sm">{category.label}</span>
               </button>
             ))}
           </div>

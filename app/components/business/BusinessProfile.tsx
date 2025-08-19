@@ -345,16 +345,16 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
             {business.socialLinks && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">Follow Us</h3>
-                <div className="flex space-x-4">
+                <div className="flex space-x-6">
                   {business.socialLinks.instagram && (
                     <a 
                       href={business.socialLinks.instagram} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       title="Follow us on Instagram"
-                      className="text-pink-500 hover:text-pink-600 transition-colors"
+                      className="text-pink-500 hover:text-pink-600 transition-all duration-200 transform hover:scale-110"
                     >
-                      <i className="bi bi-instagram text-2xl"></i>
+                      <i className="bi bi-instagram text-3xl"></i>
                     </a>
                   )}
                   {business.socialLinks.twitter && (
@@ -363,9 +363,9 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
                       target="_blank" 
                       rel="noopener noreferrer" 
                       title="Follow us on X (formerly Twitter)"
-                      className="text-gray-900 hover:text-gray-700 transition-colors"
+                      className="text-gray-900 hover:text-gray-700 transition-all duration-200 transform hover:scale-110"
                     >
-                      <i className="bi bi-twitter-x text-2xl"></i>
+                      <i className="bi bi-twitter-x text-3xl"></i>
                     </a>
                   )}
                   {business.socialLinks.facebook && (
@@ -374,9 +374,9 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
                       target="_blank" 
                       rel="noopener noreferrer"
                       title="Follow us on Facebook"
-                      className="text-blue-600 hover:text-blue-700 transition-colors"
+                      className="text-blue-600 hover:text-blue-700 transition-all duration-200 transform hover:scale-110"
                     >
-                      <i className="bi bi-facebook text-2xl"></i>
+                      <i className="bi bi-facebook text-3xl"></i>
                     </a>
                   )}
                   {business.socialLinks.linkedin && (
@@ -385,9 +385,9 @@ export function BusinessProfile({ businessId, onBack }: BusinessProfileProps) {
                       target="_blank" 
                       rel="noopener noreferrer"
                       title="Connect with us on LinkedIn"
-                      className="text-blue-700 hover:text-blue-800 transition-colors"
+                      className="text-blue-700 hover:text-blue-800 transition-all duration-200 transform hover:scale-110"
                     >
-                      <i className="bi bi-linkedin text-2xl"></i>
+                      <i className="bi bi-linkedin text-3xl"></i>
                     </a>
                   )}
                 </div>

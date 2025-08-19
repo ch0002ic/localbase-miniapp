@@ -212,10 +212,20 @@ export function EditBusinessModal({ isOpen, onClose, onSuccess, business }: Edit
                       type="text"
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 transition-colors ${
+                        businessName.trim().length < 2
+                          ? 'border-red-300 focus:ring-red-500 bg-red-50'
+                          : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+                      }`}
                       required
                       disabled={loading}
+                      placeholder="Enter your business name"
                     />
+                    {businessName.trim().length > 0 && businessName.trim().length < 2 && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Business name must be at least 2 characters
+                      </p>
+                    )}
                   </div>
 
                   <div>

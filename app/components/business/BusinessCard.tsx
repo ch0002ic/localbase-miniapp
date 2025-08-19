@@ -273,39 +273,54 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
       
       {/* Actions */}
       <div className="px-4 pb-4">
-        <div className="flex gap-2 mb-2">
-          <input
-            type="number"
-            step="0.001"
-            min="0.001"
-            max="1.0"
-            value={paymentAmount}
-            onChange={(e) => {
-              const value = parseFloat(e.target.value);
-              console.log('💳 Payment amount changed:', { value, input: e.target.value });
-              
-              if (value > 1.0) {
-                alert('⚠️ Maximum testnet payment is 1.0 ETH. Please use a smaller amount for testing.');
-                setPaymentAmount('0.001');
-              } else if (value > 0.1) {
-                const confirmed = confirm(`⚠️ You're about to pay ${value} ETH (~$${(value * 4000).toFixed(2)} USD estimated).\n\nThis is a real transaction on Base Sepolia testnet.\n\nContinue with this amount?`);
-                if (!confirmed) {
-                  setPaymentAmount('0.001');
-                  return;
-                }
-                setPaymentAmount(e.target.value);
-              } else {
-                setPaymentAmount(e.target.value);
-              }
-            }}
-            className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Amount (ETH)"
-            onClick={(e) => e.stopPropagation()}
-            title="Enter payment amount in ETH (max 1.0 for testnet)"
-          />
-          <div className="flex flex-col text-xs text-gray-500">
-            <span>Max: 1.0 ETH</span>
-            <span>~${(parseFloat(paymentAmount) * 4000).toFixed(2)} USD</span>
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 mb-2">
+            Payment Amount (ETH)
+          </label>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <input
+                type="number"
+                step="0.001"
+                min="0.001"
+                max="1.0"
+                value={paymentAmount}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  console.log('💳 Payment amount changed:', { value, input: e.target.value });
+                  
+                  if (value > 1.0) {
+                    alert('⚠️ Maximum testnet payment is 1.0 ETH. Please use a smaller amount for testing.');
+                    setPaymentAmount('0.001');
+                  } else if (value > 0.1) {
+                    alert('💡 Tip: You can use smaller amounts like 0.001-0.01 ETH for testing!');
+                    setPaymentAmount(e.target.value);
+                  } else {
+                    setPaymentAmount(e.target.value);
+                  }
+                }}
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-colors ${
+                  parseFloat(paymentAmount) < 0.001 || parseFloat(paymentAmount) > 1.0
+                    ? 'border-red-300 focus:ring-red-500 bg-red-50'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+                placeholder="0.001"
+                onClick={(e) => e.stopPropagation()}
+                title="Enter payment amount in ETH (0.001 - 1.0)"
+              />
+              {(parseFloat(paymentAmount) < 0.001 || parseFloat(paymentAmount) > 1.0) && (
+                <p className="text-xs text-red-600 mt-1">
+                  Amount must be between 0.001 and 1.0 ETH
+                </p>
+              )}
+            </div>
+            <div className="text-right min-w-[80px]">
+              <div className="text-xs text-gray-500 mb-1">USD Value</div>
+              <div className="text-sm font-medium text-gray-700">
+                ~${(parseFloat(paymentAmount) * 4000).toFixed(2)}
+              </div>
+              <div className="text-xs text-gray-400">Max: 1.0 ETH</div>
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
