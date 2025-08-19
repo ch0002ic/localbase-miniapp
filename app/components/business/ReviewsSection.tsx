@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { Review } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
-import { Star, ThumbsUp, Calendar, User, Send, CheckCircle } from 'lucide-react';
+import { Star, ThumbsUp, Calendar, User, Send, CheckCircle, Trash2 } from 'lucide-react';
 
 interface ReviewsSectionProps {
   businessId: string;
@@ -115,6 +115,31 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
   const handleCancelEdit = () => {
     setEditingReview(null);
     setEditingData({ rating: 5, comment: '' });
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!isConnected || !address) {
+      alert('Please connect your wallet to delete reviews');
+      return;
+    }
+
+    try {
+      // Confirm deletion
+      const shouldDelete = confirm('Are you sure you want to delete this review? This action cannot be undone.');
+      if (!shouldDelete) return;
+
+      setSubmitting(true);
+      await LocalBaseAPI.deleteReview(reviewId, address);
+      
+      onReviewSubmitted(); // Refresh reviews
+      showSuccessFeedback('Review deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete review';
+      showErrorFeedback(`❌ ${errorMessage}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleHelpfulVote = async (reviewId: string) => {
@@ -351,12 +376,22 @@ export function ReviewsSection({ businessId, reviews, onReviewSubmitted }: Revie
                           </button>
                         </>
                       ) : (
-                        <button
-                          onClick={() => handleEditReview(review)}
-                          className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
-                        >
-                          Edit
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleEditReview(review)}
+                            className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteReview(review.id)}
+                            disabled={submitting}
+                            className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Delete review"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </>
                       )}
                     </div>
                   )}

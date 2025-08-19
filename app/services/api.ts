@@ -260,6 +260,70 @@ export class LocalBaseAPI {
     }
   }
 
+  // Delete methods
+  static async deleteReview(reviewId: string, userAddress: string): Promise<void> {
+    try {
+      const reviews = await PersistentStorage.getStoredReviews();
+      const reviewIndex = reviews.findIndex(r => r.id === reviewId);
+      
+      if (reviewIndex === -1) {
+        throw new Error('Review not found');
+      }
+      
+      // Verify the review belongs to the user
+      const review = reviews[reviewIndex];
+      if (review.userAddress !== userAddress) {
+        throw new Error('Unauthorized: You can only delete your own reviews');
+      }
+      
+      // Remove the review
+      const deletedReview = reviews.splice(reviewIndex, 1)[0];
+      await PersistentStorage.saveReviews(reviews);
+      
+      // Update business average rating after deletion
+      await this.updateBusinessRating(deletedReview.businessId);
+      
+      console.log(`✅ Review ${reviewId} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      throw error;
+    }
+  }
+
+  static async deleteCommunityPost(postId: string, userAddress: string): Promise<void> {
+    try {
+      const posts = await PersistentStorage.getStoredPosts();
+      const postIndex = posts.findIndex(p => p.id === postId);
+      
+      if (postIndex === -1) {
+        throw new Error('Post not found');
+      }
+      
+      // Verify the post belongs to the user
+      const post = posts[postIndex];
+      if (post.authorAddress !== userAddress) {
+        throw new Error('Unauthorized: You can only delete your own posts');
+      }
+      
+      // Remove the post
+      posts.splice(postIndex, 1);
+      await PersistentStorage.savePosts(posts);
+      
+      // Clean up associated comments from localStorage
+      const commentsKey = `comments_${postId}`;
+      localStorage.removeItem(commentsKey);
+      
+      // Clean up likes data from localStorage
+      const likesKey = `likes_${postId}`;
+      localStorage.removeItem(likesKey);
+      
+      console.log(`✅ Community post ${postId} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting community post:', error);
+      throw error;
+    }
+  }
+
   static async toggleReviewHelpful(reviewId: string, userAddress: string): Promise<boolean> {
     try {
       const reviews = await PersistentStorage.getStoredReviews();

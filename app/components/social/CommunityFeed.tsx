@@ -257,6 +257,31 @@ export function CommunityFeed() {
     setEditingTags('');
   };
 
+  const handleDeletePost = async (postId: string) => {
+    if (!isConnected || !address) {
+      alert('Please connect your wallet to delete posts');
+      return;
+    }
+
+    try {
+      // Confirm deletion
+      const shouldDelete = confirm('Are you sure you want to delete this post? This action cannot be undone.');
+      if (!shouldDelete) return;
+
+      // Call API to delete post (includes author verification)
+      await LocalBaseAPI.deleteCommunityPost(postId, address);
+
+      // Refresh posts to reflect the deletion
+      fetchPosts();
+      
+      console.log(`✅ Post deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete post';
+      alert(`❌ ${errorMessage}`);
+    }
+  };
+
   const addQuickTag = (tag: string) => {
     const tagText = `#${tag} `;
     setNewPost(prev => prev + tagText);
@@ -632,12 +657,21 @@ export function CommunityFeed() {
                         </button>
                       </>
                     ) : (
-                      <button
-                        onClick={() => handleEditPost(post)}
-                        className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
-                      >
-                        Edit
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleEditPost(post)}
+                          className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200"
+                          title="Delete post"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </>
                     )}
                   </div>
                 )}
