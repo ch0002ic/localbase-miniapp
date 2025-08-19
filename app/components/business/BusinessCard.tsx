@@ -24,6 +24,11 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
   const { composeCast } = useComposeCast();
   const openUrl = useOpenUrl();
   
+  const isDefaultBusiness = (businessId: string) => {
+    // Mark original demo businesses
+    return ['1', '2', '3', '4', '5', '6'].includes(businessId);
+  };
+
   const getCategoryColor = (category: string) => {
     const colors = {
       Food: 'bg-orange-100 text-orange-800',
@@ -73,10 +78,13 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
     return `${status} today ${openTime} - ${closeTime}`;
   };
   
-  const getReputationColor = (score: number) => {
-    if (score >= 95) return 'text-green-600';
-    if (score >= 85) return 'text-yellow-600';
-    return 'text-red-600';
+  const getRatingColor = (rating: number, hasReviews: boolean) => {
+    if (!hasReviews) return 'text-gray-400';
+    if (rating >= 4.5) return 'text-green-600';
+    if (rating >= 4.0) return 'text-green-500';
+    if (rating >= 3.5) return 'text-yellow-600';
+    if (rating >= 3.0) return 'text-orange-500';
+    return 'text-red-500';
   };
   
   const handleCardClick = () => {
@@ -198,19 +206,30 @@ export function BusinessCard({ business, onBusinessUpdate, onViewProfile }: Busi
                     <span className="text-xs font-medium">Base Pay</span>
                   </div>
                 )}
+                {isDefaultBusiness(business.id) && (
+                  <div className="flex items-center gap-1 text-blue-600">
+                    <span className="text-xs font-medium bg-blue-100 px-2 py-1 rounded-full">Demo</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
           
           <div className="text-right">
             <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className={`font-semibold ${getReputationColor(business.reputationScore)}`}>
-                {(business.averageRating || 0).toFixed(1)}
+              {(business.totalReviews || 0) === 0 ? (
+                <Star className="w-4 h-4 text-gray-300" />
+              ) : (
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              )}
+              <span className={`font-semibold ${
+                getRatingColor(business.averageRating || 0, (business.totalReviews || 0) > 0)
+              }`}>
+                {(business.totalReviews || 0) === 0 ? '--' : (business.averageRating || 0).toFixed(1)}
               </span>
             </div>
             <p className="text-xs text-gray-500">
-              {business.totalReviews || 0} reviews
+              {(business.totalReviews || 0) === 0 ? 'No reviews yet' : `${business.totalReviews || 0} reviews`}
             </p>
           </div>
         </div>
