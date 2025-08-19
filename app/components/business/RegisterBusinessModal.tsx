@@ -18,6 +18,13 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
   const [businessName, setBusinessName] = useState('');
   const [businessDescription, setBusinessDescription] = useState('');
   const [businessCategory, setBusinessCategory] = useState<BusinessCategory>('services'); // Default to services
+  const [businessAddress, setBusinessAddress] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [website, setWebsite] = useState('');
+  const [priceRange, setPriceRange] = useState('$$');
+  const [openTime, setOpenTime] = useState('09:00');
+  const [closeTime, setCloseTime] = useState('18:00');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const { address, isConnected } = useAccount();
@@ -39,8 +46,8 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
       return;
     }
 
-    if (!businessId.trim() || !businessName.trim() || !businessDescription.trim()) {
-      alert('Please fill in all fields');
+    if (!businessId.trim() || !businessName.trim() || !businessDescription.trim() || !businessAddress.trim()) {
+      alert('Please fill in all required fields');
       return;
     }
 
@@ -70,14 +77,30 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
         name: businessName.trim(),
         description: businessDescription.trim(),
         category: businessCategory,
-        address: 'LocalBase Community',
+        address: businessAddress.trim(),
         latitude: 0,
         longitude: 0,
         owner: address,
         isActive: true,
         totalTransactions: 0,
         reputationScore: 0,
-        acceptsBasePay: true
+        acceptsBasePay: true,
+        phoneNumber: phoneNumber.trim() || undefined,
+        email: email.trim() || undefined,
+        website: website.trim() || undefined,
+        priceRange: priceRange as '$' | '$$' | '$$$' | '$$$$',
+        hours: {
+          monday: { open: openTime, close: closeTime },
+          tuesday: { open: openTime, close: closeTime },
+          wednesday: { open: openTime, close: closeTime },
+          thursday: { open: openTime, close: closeTime },
+          friday: { open: openTime, close: closeTime },
+          saturday: { open: openTime, close: closeTime },
+          sunday: { open: openTime, close: closeTime },
+        },
+        verified: false,
+        averageRating: 0,
+        totalReviews: 0,
       });
       
       setSuccess(true);
@@ -94,6 +117,13 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
         setBusinessName('');
         setBusinessDescription('');
         setBusinessCategory('services');
+        setBusinessAddress('');
+        setPhoneNumber('');
+        setEmail('');
+        setWebsite('');
+        setPriceRange('$$');
+        setOpenTime('09:00');
+        setCloseTime('18:00');
         setSuccess(false);
         onClose();
         // Call the success callback to refresh the business list
@@ -114,7 +144,7 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900">Register Your Business</h2>
@@ -201,6 +231,112 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Address *
+                </label>
+                <input
+                  type="text"
+                  value={businessAddress}
+                  onChange={(e) => setBusinessAddress(e.target.value)}
+                  placeholder="e.g., 50 Nanyang Ave, Singapore"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+65 6XXX XXXX"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={loading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Price Range
+                  </label>
+                  <select
+                    value={priceRange}
+                    onChange={(e) => setPriceRange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={loading}
+                  >
+                    <option value="$">$ - Budget</option>
+                    <option value="$$">$$ - Moderate</option>
+                    <option value="$$$">$$$ - Expensive</option>
+                    <option value="$$$$">$$$$ - Very Expensive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="hello@yourbusiness.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Website
+                </label>
+                <input
+                  type="url"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://yourbusiness.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Operating Hours
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Open Time</label>
+                    <input
+                      type="time"
+                      value={openTime}
+                      onChange={(e) => setOpenTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={loading}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Close Time</label>
+                    <input
+                      type="time"
+                      value={closeTime}
+                      onChange={(e) => setCloseTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Same hours will be applied to all days
+                </p>
               </div>
 
               {!isConnected && (
