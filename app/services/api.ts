@@ -12,7 +12,7 @@ export class LocalBaseAPI {
     };
   }
 
-  // Clean up all corrupted business data
+  // Clean up corrupted business data
   static async cleanupCorruptedData(): Promise<void> {
     try {
       console.log('🔧 Starting corrupted data cleanup...');
