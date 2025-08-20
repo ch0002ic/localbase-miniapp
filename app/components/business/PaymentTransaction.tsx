@@ -1,6 +1,7 @@
 'use client';
 
 import { parseEther, encodeFunctionData } from 'viem';
+import { useRef } from 'react';
 import {
   Transaction,
   TransactionButton,
@@ -30,6 +31,10 @@ export function PaymentTransaction({
   onError 
 }: PaymentTransactionProps) {
   const toast = useToastContext();
+  
+  // Track which statuses have been handled to prevent duplicate notifications
+  const handledStatuses = useRef<Set<string>>(new Set());
+  
   // Debug logging for payment amount
   console.log('💰 PaymentTransaction Debug:', { 
     businessName: business.name, 
@@ -40,6 +45,28 @@ export function PaymentTransaction({
 
   const handleOnStatus = (status: LifecycleStatus) => {
     console.log('Payment transaction status:', status);
+    
+    // Reset handled statuses when a new transaction starts
+    if (status.statusName === 'init') {
+      handledStatuses.current.clear();
+      console.log('New transaction started, cleared handled statuses');
+      return;
+    }
+    
+    // Create a unique key for this status to prevent duplicate notifications
+    const transactionHash = (status.statusData && 'transactionReceipts' in status.statusData) 
+      ? status.statusData.transactionReceipts?.[0]?.transactionHash 
+      : undefined;
+    const statusKey = `${status.statusName}-${transactionHash || Date.now()}`;
+    
+    // Skip if we've already handled this exact status
+    if (handledStatuses.current.has(statusKey)) {
+      console.log('Status already handled, skipping:', statusKey);
+      return;
+    }
+    
+    // Mark this status as handled
+    handledStatuses.current.add(statusKey);
     
     if (status.statusName === 'success') {
       console.log('✅ Payment successful!', status);

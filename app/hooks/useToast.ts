@@ -14,7 +14,20 @@ export const useToast = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   
   const addToast = useCallback((type: ToastType, message: string, duration = 5000) => {
-    const id = Date.now().toString();
+    // Check if a toast with the same type and message already exists (within last 1 second)
+    const now = Date.now();
+    const existingToast = toasts.find(toast => 
+      toast.type === type && 
+      toast.message === message &&
+      (now - parseInt(toast.id)) < 1000 // Only prevent duplicates within 1 second
+    );
+    
+    if (existingToast) {
+      console.log('Duplicate toast prevented:', { type, message });
+      return existingToast.id;
+    }
+    
+    const id = now.toString();
     const toast: Toast = { id, type, message, duration };
     
     setToasts(prev => [...prev, toast]);
@@ -26,7 +39,7 @@ export const useToast = () => {
     }
     
     return id;
-  }, []);
+  }, [toasts]);
   
   const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
