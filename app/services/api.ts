@@ -15,7 +15,6 @@ export class LocalBaseAPI {
   // Clean up all corrupted business data
   static async cleanupCorruptedData(): Promise<void> {
     try {
-      console.log('🔧 Starting corrupted data cleanup...');
       const businesses = await PersistentStorage.getStoredBusinesses();
       let hasChanges = false;
       
@@ -25,57 +24,52 @@ export class LocalBaseAPI {
         // Clean up image URLs
         const cleanedBusiness = this.cleanupBusinessImageUrls(business);
         
-        // AGGRESSIVE FIX: Force correct hours for known businesses
-        if (cleanedBusiness.name?.toLowerCase().includes('mcdonald')) {
-          console.log('🍟 Fixing McDonald\'s hours data...');
-          cleanedBusiness.hours = {
-            monday: { open: '06:00', close: '23:00', closed: false },
-            tuesday: { open: '06:00', close: '23:00', closed: false },
-            wednesday: { open: '06:00', close: '23:00', closed: false },
-            thursday: { open: '06:00', close: '23:00', closed: false },
-            friday: { open: '06:00', close: '23:00', closed: false },
-            saturday: { open: '06:00', close: '23:00', closed: false },
-            sunday: { open: '07:00', close: '22:00', closed: false }
-          };
-          hasChanges = true;
-        } else {
-          // Fix business hours data for other businesses
-          if (cleanedBusiness.hours) {
-            const fixedHours: { [key: string]: { open: string; close: string; closed?: boolean } } = {};
-            
-            Object.entries(cleanedBusiness.hours).forEach(([day, hours]) => {
-              if (hours && typeof hours === 'object' && 'open' in hours && 'close' in hours) {
-                let openTime = this.normalizeTimeFormat(hours.open);
-                let closeTime = this.normalizeTimeFormat(hours.close);
-                
-                // Fix specific data corruption issues
-                // If close time is early morning (00:00-05:59) or same as open time, it's likely corrupted
-                const openHour = parseInt(openTime.split(':')[0], 10);
-                const closeHour = parseInt(closeTime.split(':')[0], 10);
-                
-                if (closeHour >= 0 && closeHour <= 5 && closeHour <= openHour) {
+        // Fix business hours data - reset to sensible defaults if corrupted
+        if (cleanedBusiness.hours) {
+          const fixedHours: { [key: string]: { open: string; close: string; closed?: boolean } } = {};
+          
+          Object.entries(cleanedBusiness.hours).forEach(([day, hours]) => {
+            if (hours && typeof hours === 'object' && 'open' in hours && 'close' in hours) {
+              let openTime = this.normalizeTimeFormat(hours.open);
+              let closeTime = this.normalizeTimeFormat(hours.close);
+              
+              // Fix specific data corruption issues
+              // If close time is early morning (00:00-05:00), it's likely corrupted
+              const closeHour = parseInt(closeTime.split(':')[0], 10);
+              if (closeHour >= 0 && closeHour <= 5) {
+                // Reset to sensible business hours based on business type
+                if (business.name?.toLowerCase().includes('mcdonald')) {
+                  // McDonald's typical hours
+                  if (day === 'sunday') {
+                    openTime = '07:00';
+                    closeTime = '22:00';
+                  } else {
+                    openTime = '06:00';
+                    closeTime = '23:00';
+                  }
+                } else {
                   // Default business hours for other businesses
                   openTime = '09:00';
                   closeTime = day === 'sunday' ? '18:00' : '21:00';
                 }
-                
-                fixedHours[day] = {
-                  open: openTime,
-                  close: closeTime,
-                  closed: hours.closed || false
-                };
-              } else {
-                // Default hours if data is completely corrupted
-                fixedHours[day] = {
-                  open: '09:00',
-                  close: '18:00',
-                  closed: false
-                };
               }
-            });
-            
-            cleanedBusiness.hours = fixedHours;
-          }
+              
+              fixedHours[day] = {
+                open: openTime,
+                close: closeTime,
+                closed: hours.closed || false
+              };
+            } else {
+              // Default hours if data is completely corrupted
+              fixedHours[day] = {
+                open: '09:00',
+                close: '18:00',
+                closed: false
+              };
+            }
+          });
+          
+          cleanedBusiness.hours = fixedHours;
         }
         
         // Check if any changes were made
@@ -89,8 +83,6 @@ export class LocalBaseAPI {
       if (hasChanges) {
         await PersistentStorage.saveBusinesses(cleanedBusinesses);
         console.log('✅ Cleaned up corrupted business data including hours');
-      } else {
-        console.log('ℹ️ No corrupted data found to clean up');
       }
     } catch (error) {
       console.error('Error cleaning up corrupted data:', error);
