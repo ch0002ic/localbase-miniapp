@@ -6,6 +6,7 @@ import { SmartContractService } from '../../services/smartContract';
 import { LocalBaseAPI } from '../../services/api';
 import { BusinessCategory } from '../../types/localbase';
 import { X, Loader2, CheckCircle } from 'lucide-react';
+import { useToastContext } from '../ToastProvider';
 
 interface RegisterBusinessModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
   const [success, setSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const { address, isConnected } = useAccount();
+  const toast = useToastContext();
 
   // Auto-generate business ID when name changes
   const generateBusinessId = (name: string) => {
@@ -230,6 +232,7 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
           console.log('✅ Business registered on-chain:', receipt);
         } catch (contractError) {
           console.warn('⚠️ On-chain registration failed, continuing with local storage:', contractError);
+          toast.warning('Blockchain registration failed, saved locally instead');
           // Continue with local storage even if on-chain fails
         }
       }
@@ -270,9 +273,9 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
       
       // Show success message
       const successMsg = receipt 
-        ? `✅ Business registered on-chain: ${receipt}` 
-        : '✅ Business registered locally!';
-      console.log(successMsg);
+        ? 'Business registered successfully on blockchain!' 
+        : 'Business registered successfully!';
+      toast.success(successMsg);
       
       // Reset form after 2 seconds and close modal
       setTimeout(() => {
@@ -297,7 +300,7 @@ export function RegisterBusinessModal({ isOpen, onClose, onSuccess }: RegisterBu
       
     } catch (error) {
       console.error('Business registration failed:', error);
-      alert(`Registration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Registration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }

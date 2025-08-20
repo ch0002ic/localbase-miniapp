@@ -7,11 +7,12 @@ import { BusinessProfile } from './BusinessProfile';
 import { RegisterBusinessModal } from './RegisterBusinessModal';
 import { MyBusinesses } from './MyBusinesses';
 import { SearchWithAutocomplete } from './SearchWithAutocomplete';
-import { LoadingGrid, BusinessCardSkeleton } from '../ui/Skeleton';
+import { SkeletonBusinessCard } from '../LoadingStates';
 import { Business, BusinessCategory } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
 import { MockModeBanner } from '../MockModeBanner';
 import { MapPin, Plus, Store, User } from 'lucide-react';
+import { useToastContext } from '../ToastProvider';
 
 export function BusinessDirectory() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -23,6 +24,7 @@ export function BusinessDirectory() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [searchMode, setSearchMode] = useState(false); // Track if we're showing search results
   const { isConnected } = useAccount();
+  const toast = useToastContext();
   
   const categories: Array<{ id: BusinessCategory | 'all'; label: string; icon: string }> = [
     { id: 'all', label: 'All', icon: '🏢' },
@@ -42,10 +44,11 @@ export function BusinessDirectory() {
       setSearchMode(false); // Reset search mode when fetching by category
     } catch (error) {
       console.error('Error fetching businesses:', error);
+      toast.error('Failed to load businesses');
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, toast]);
   
   useEffect(() => {
     fetchBusinesses();
@@ -130,7 +133,11 @@ export function BusinessDirectory() {
         </div>
 
         {/* Business Cards Skeleton */}
-        <LoadingGrid count={6} SkeletonComponent={BusinessCardSkeleton} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonBusinessCard key={i} />
+          ))}
+        </div>
       </div>
     );
   }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { Award, Gift, Star, ShoppingBag } from 'lucide-react';
+import { useToastContext } from '../ToastProvider';
 
 interface LoyaltyNFT {
   tokenId: string;
@@ -19,6 +20,7 @@ interface LoyaltyNFT {
 
 export function NFTRewards() {
   const { address, isConnected } = useAccount();
+  const toast = useToastContext();
   const [loyaltyNFTs, setLoyaltyNFTs] = useState<LoyaltyNFT[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -92,10 +94,11 @@ export function NFTRewards() {
       loadUsedRewards();
     } catch (error) {
       console.error('Failed to fetch loyalty NFTs:', error);
+      toast.error('Failed to load loyalty rewards');
     } finally {
       setLoading(false);
     }
-  }, [loadUsedRewards]);
+  }, [loadUsedRewards, toast]);
 
   useEffect(() => {
     if (isConnected && address) {
@@ -154,11 +157,11 @@ export function NFTRewards() {
       setStats(prev => ({ ...prev, totalSavings: newSavings }));
       
       // Show success message
-      alert(`🎉 Reward Used Successfully!\n\n${nft.tier} benefit activated for ${nft.businessName}\n${nft.discountPercentage}% discount applied!\n\nNext use available in 24 hours.`);
+      toast.success(`🎉 ${nft.tier} benefit activated for ${nft.businessName}! ${nft.discountPercentage}% discount applied. Next use available in 24 hours.`);
       
     } catch (error) {
       console.error('Failed to use reward:', error);
-      alert('Failed to use reward. Please try again.');
+      toast.error('Failed to use reward. Please try again.');
     } finally {
       setUsingReward(prev => ({ ...prev, [nft.tokenId]: false }));
     }

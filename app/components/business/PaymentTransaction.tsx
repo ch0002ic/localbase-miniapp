@@ -14,6 +14,7 @@ import { Business } from '../../types/localbase';
 import { SmartContractService } from '../../services/smartContract';
 import { CONTRACT_CONFIG } from '../../config/contract';
 import { LocalBasePaymentABI } from '../../contracts/LocalBasePayment.abi';
+import { useToastContext } from '../ToastProvider';
 
 interface PaymentTransactionProps {
   business: Business;
@@ -28,6 +29,7 @@ export function PaymentTransaction({
   onSuccess, 
   onError 
 }: PaymentTransactionProps) {
+  const toast = useToastContext();
   // Debug logging for payment amount
   console.log('💰 PaymentTransaction Debug:', { 
     businessName: business.name, 
@@ -41,6 +43,7 @@ export function PaymentTransaction({
     
     if (status.statusName === 'success') {
       console.log('✅ Payment successful!', status);
+      toast.success(`Payment of ${amount} ETH sent to ${business.name}!`);
       if (onSuccess) {
         onSuccess();
       }
@@ -81,6 +84,11 @@ export function PaymentTransaction({
       // Only call onError for actual errors, not user cancellations
       if (onError && !errorMessage.includes('cancelled')) {
         onError(errorMessage);
+      }
+      
+      // Show toast for user-friendly error feedback
+      if (!errorMessage.includes('cancelled')) {
+        toast.error(errorMessage);
       }
     }
   };

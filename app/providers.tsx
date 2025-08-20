@@ -3,6 +3,7 @@
 import { baseSepolia } from 'wagmi/chains';
 import { MiniKitProvider } from '@coinbase/onchainkit/minikit';
 import type { ReactNode } from 'react';
+import { ToastProvider } from './components/ToastProvider';
 
 // Full MiniKitProvider configuration
 export function Providers(props: { children: ReactNode }) {
@@ -19,7 +20,9 @@ export function Providers(props: { children: ReactNode }) {
         },
       }}
     >
-      {props.children}
+      <ToastProvider>
+        {props.children}
+      </ToastProvider>
     </MiniKitProvider>
   );
 }

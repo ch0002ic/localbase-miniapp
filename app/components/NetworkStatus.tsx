@@ -3,11 +3,13 @@
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { baseSepolia } from 'viem/chains';
 import { AlertCircle, Check, ArrowRightLeft } from 'lucide-react';
+import { useToastContext } from './ToastProvider';
 
 export function NetworkStatus() {
   const { isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
+  const toast = useToastContext();
 
   if (!isConnected) return null;
 
@@ -16,8 +18,14 @@ export function NetworkStatus() {
                             chainId === 84532 ? 'Base Sepolia' : 
                             `Network ${chainId}`;
 
-  const handleSwitchNetwork = () => {
-    switchChain({ chainId: baseSepolia.id });
+  const handleSwitchNetwork = async () => {
+    try {
+      await switchChain({ chainId: baseSepolia.id });
+      toast.success('Successfully switched to Base Sepolia');
+    } catch (error) {
+      console.error('Failed to switch network:', error);
+      toast.error('Failed to switch network. Please try again.');
+    }
   };
 
   if (isCorrectNetwork) {

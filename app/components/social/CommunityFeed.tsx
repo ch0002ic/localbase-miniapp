@@ -7,11 +7,13 @@ import { MessageCircle, Heart, Share2, MapPin, Clock, Users, TrendingUp, Trash2,
 import { CommunityPost } from '../../types/localbase';
 import { LocalBaseAPI } from '../../services/api';
 import { CommunityPostSkeleton } from '../ui/Skeleton';
+import { useToastContext } from '../ToastProvider';
 
 export function CommunityFeed() {
   const { address, isConnected } = useAccount();
   const { context } = useMiniKit();
   const { composeCast } = useComposeCast();
+  const toast = useToastContext();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [newPost, setNewPost] = useState('');
   const [loading, setLoading] = useState(true);
@@ -107,10 +109,11 @@ export function CommunityFeed() {
       setPosts(postsWithCommentCounts);
     } catch (error) {
       console.error('Failed to fetch posts:', error);
+      toast.error('Failed to load community posts');
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [activeTab, toast]);
 
   useEffect(() => {
     fetchPosts();
@@ -170,7 +173,7 @@ export function CommunityFeed() {
   
   const handleLike = (postId: string) => {
     if (!isConnected || !address) {
-      alert('Please connect your wallet to like posts');
+      toast.warning('Please connect your wallet to like posts');
       return;
     }
     
@@ -294,7 +297,7 @@ export function CommunityFeed() {
 
   const handleDeletePost = async (postId: string) => {
     if (!isConnected || !address) {
-      alert('Please connect your wallet to delete posts');
+      toast.warning('Please connect your wallet to delete posts');
       return;
     }
 
@@ -313,7 +316,7 @@ export function CommunityFeed() {
     } catch (error) {
       console.error('Error deleting post:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete post';
-      alert(`❌ ${errorMessage}`);
+      toast.error(errorMessage);
     }
   };
 
@@ -364,8 +367,10 @@ export function CommunityFeed() {
       fetchPosts(); // Refresh the list
       
       console.log(`✅ Posted with tags: ${newCommunityPost.tags?.join(', ')}`);
+      toast.success('Post created successfully!');
     } catch (error) {
       console.error('Error posting:', error);
+      toast.error('Failed to create post');
     }
   };
   
@@ -481,7 +486,7 @@ export function CommunityFeed() {
 
   const deleteComment = async (postId: string, commentId: string) => {
     if (!isConnected || !address) {
-      alert('Please connect your wallet to delete comments');
+      toast.warning('Please connect your wallet to delete comments');
       return;
     }
 
@@ -506,10 +511,11 @@ export function CommunityFeed() {
       ));
 
       console.log(`✅ Comment deleted successfully`);
+      toast.success('Comment deleted successfully');
     } catch (error) {
       console.error('Error deleting comment:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete comment';
-      alert(`❌ ${errorMessage}`);
+      toast.error(errorMessage);
     }
   };
 
@@ -545,15 +551,16 @@ export function CommunityFeed() {
       setEditingCommentContent('');
 
       console.log(`✅ Comment edited successfully`);
+      toast.success('Comment updated successfully');
     } catch (error) {
       console.error('Error editing comment:', error);
-      alert('❌ Failed to edit comment');
+      toast.error('Failed to edit comment');
     }
   };
 
   const handleCommentLike = (postId: string, commentId: string) => {
     if (!isConnected || !address) {
-      alert('Please connect your wallet to like comments');
+      toast.warning('Please connect your wallet to like comments');
       return;
     }
 
@@ -663,7 +670,7 @@ export function CommunityFeed() {
         await navigator.clipboard.writeText(shareText);
         
         // Show success message
-        alert('Post link copied to clipboard!');
+        toast.success('Post link copied to clipboard!');
       }
     } catch (error) {
       // Handle share cancellation silently (user action, not an error)
